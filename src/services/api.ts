@@ -31,10 +31,20 @@ api.interceptors.response.use(
   (error) => {
     // Tratamento global de erros
     if (error.response?.status === 401) {
-      // Limpar token e redirecionar para login
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      // Verificar se é uma requisição de refresh token
+      const isRefreshRequest = error.config?.url?.includes('/auth/refresh');
+      
+      if (!isRefreshRequest) {
+        // Apenas redirecionar para login se NÃO for uma tentativa de refresh
+        console.log('AuthContext: Token inválido, redirecionando para login...');
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
+        localStorage.removeItem('sessionExpiresAt');
+        window.location.href = '/login';
+      } else {
+        console.log('AuthContext: Falha no refresh token, mantendo usuário logado...');
+      }
     }
     return Promise.reject(error);
   }
@@ -87,7 +97,15 @@ export const authService = {
   // Refresh token
   refreshToken: async () => {
     try {
-      const response = await api.post('/auth/refresh');
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (!refreshToken) {
+        throw new Error('Refresh token não encontrado');
+      }
+
+      const response = await api.post('/auth/refresh', {
+        refreshToken: refreshToken,
+        expiresInMins: 1 // 1 minuto para teste
+      });
       return response.data;
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: unknown; status?: number }; message?: string; status?: number };

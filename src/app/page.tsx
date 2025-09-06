@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Layout, Card, Typography, Space, Button } from 'antd';
 import { CheckCircleOutlined, RocketOutlined, UserOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
@@ -16,6 +16,13 @@ export default function Home() {
   const { user, isAuthenticated, loading } = useAuth();
   const router = useRouter();
 
+    // Redirecionar usuários autenticados para o dashboard
+  useEffect(() => {
+    if (!loading && isAuthenticated) {
+      router.push('/dashboard');
+    }
+  }, [isAuthenticated, loading, router]);
+
   if (loading) {
     return (
       <Layout style={{ minHeight: '100vh' }}>
@@ -27,10 +34,8 @@ export default function Home() {
     );
   }
 
-  // Redirecionar usuários autenticados para o dashboard
   if (isAuthenticated) {
-    router.push('/dashboard');
-    return null;
+    return null; // Será redirecionado pelo useEffect
   }
 
   return (

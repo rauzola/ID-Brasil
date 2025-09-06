@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Layout, Card, Typography, Space, Row, Col, Statistic, Avatar, Button } from 'antd';
 import { 
   UserOutlined, 
@@ -12,6 +12,7 @@ import {
 } from '@ant-design/icons';
 import Header from '@/components/Header';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import SessionStatus from '@/components/SessionStatus';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 
@@ -21,6 +22,13 @@ const { Title, Text } = Typography;
 export default function DashboardPage() {
   const { user, isAuthenticated, loading, logout } = useAuth();
   const router = useRouter();
+
+  // Redirecionar se não estiver autenticado
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      router.push('/login');
+    }
+  }, [isAuthenticated, loading, router]);
 
   if (loading) {
     return (
@@ -34,8 +42,7 @@ export default function DashboardPage() {
   }
 
   if (!isAuthenticated) {
-    router.push('/login');
-    return null;
+    return null; // Será redirecionado pelo useEffect
   }
 
   const handleLogout = () => {
@@ -49,6 +56,9 @@ export default function DashboardPage() {
       <Content style={{ padding: '24px' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <Space direction="vertical" size="large" style={{ width: '100%' }}>
+            {/* Status da Sessão */}
+            <SessionStatus />
+            
             {/* Header do Dashboard */}
             <Card>
               <Row justify="space-between" align="middle">

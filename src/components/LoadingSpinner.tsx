@@ -24,8 +24,9 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
     }}>
       <Spin 
         size={size} 
-        indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />}
+        spinning={true}
         tip={tip}
+        indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />}
       />
     </div>
   );
