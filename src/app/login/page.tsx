@@ -23,19 +23,24 @@ export default function LoginPage() {
     setLoading(true);
     
     try {
-      console.log('Tentando fazer login com:', values.username);
       const success = await login(values.username, values.password);
-      console.log('Resultado do login:', success);
       
       if (success) {
         message.success('Login realizado com sucesso!');
         router.push('/dashboard');
       } else {
-        console.log('Login falhou - success = false');
         message.error('Nome de usuário ou senha incorretos');
       }
     } catch (error: unknown) {
-      console.error('Erro no login:', error);
+      const errorMessage = error instanceof Error ? error.message : '';
+      const errorName = error instanceof Error ? error.name : '';
+      
+      // Tratar erro específico de usuário não cadastrado
+      if (errorMessage === 'Usuário não cadastrado no sistema' || errorName === 'RoleValidationError') {
+        message.error('Usuário não cadastrado no sistema');
+        return;
+      }
+      
       
       const axiosError = error as { response?: { status?: number }; code?: string };
       

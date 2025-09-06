@@ -36,14 +36,12 @@ api.interceptors.response.use(
       
       if (!isRefreshRequest) {
         // Apenas redirecionar para login se NÃO for uma tentativa de refresh
-        console.log('AuthContext: Token inválido, redirecionando para login...');
         localStorage.removeItem('token');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
         localStorage.removeItem('sessionExpiresAt');
         window.location.href = '/login';
       } else {
-        console.log('AuthContext: Falha no refresh token, mantendo usuário logado...');
       }
     }
     return Promise.reject(error);
@@ -120,6 +118,18 @@ export const authService = {
       throw error;
     }
   },
+
+  getUserById: async (id: number) => {
+    try {
+      const response = await api.get(`/users/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao obter dados do usuário:', error);
+      throw error;
+    }
+  },
 };
+
+
 
 export default api;

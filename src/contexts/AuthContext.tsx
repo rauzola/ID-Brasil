@@ -70,7 +70,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const userData = await authService.getMe();
       setUser(userData);
-      console.log('AuthContext: Token validado com sucesso');
     } catch (error) {
       console.error('AuthContext: Token inválido ou expirado:', error);
       // Token inválido, limpar dados
@@ -112,13 +111,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const refreshToken = useCallback(async (): Promise<boolean> => {
     if (isRefreshing) {
-      console.log('AuthContext: Refresh já em andamento, aguardando...');
       return false;
     }
 
     setIsRefreshing(true);
     try {
-      console.log(`AuthContext: Tentando renovar token real (tentativa ${refreshAttempts + 1})...`);
       
       const response = await authService.refreshToken();
       
@@ -135,11 +132,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         localStorage.setItem('refreshToken', newRefreshToken);
         localStorage.setItem('sessionExpiresAt', expiresAt.toString());
         
-        console.log('AuthContext: Token renovado com sucesso, nova expiração:', new Date(expiresAt));
         return true;
       }
       
-      console.log('AuthContext: Nenhum token encontrado na resposta de refresh');
       return false;
     } catch (error) {
       console.error('AuthContext: Erro ao renovar token:', error);
@@ -147,7 +142,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       // Só fazer logout se já tentou 3 vezes e ainda falhou
       if (refreshAttempts >= 2) {
-        console.log('AuthContext: Muitas tentativas de refresh falharam, fazendo logout...');
         logout();
         return false;
       }
@@ -175,14 +169,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       // Se restam menos de 2 minutos, tentar refresh automático
       if (timeUntilExpiry < 2 * 60 * 1000 && timeUntilExpiry > 0 && !isRefreshing) {
-        console.log('AuthContext: Sessão próxima do vencimento, tentando refresh automático...');
         const success = await refreshToken();
         if (success) {
           setIsSessionExpiring(false);
           setRefreshAttempts(0); // Reset contador em caso de sucesso
         } else if (refreshAttempts < 2) {
           // Se falhou mas ainda não tentou 3 vezes, tentar novamente em 5 segundos
-          console.log('AuthContext: Refresh falhou, tentando novamente em 5 segundos...');
           setTimeout(() => {
             if (timeUntilExpiry > 0) { // Só tentar se ainda não expirou
               refreshToken();
@@ -203,41 +195,54 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
-      console.log('AuthContext: Iniciando login para', username);
       const response = await authService.login(username, password);
-      console.log('AuthContext: Resposta da API:', response);
-      
-      // A API DummyJSON retorna 'token' e 'refreshToken' no response
+  
       if (response.token || response.accessToken) {
         const token = response.token || response.accessToken;
-        const refreshToken = response.refreshToken || response.token; // Fallback para o token principal
-        
-        console.log('AuthContext: Token encontrado:', token ? 'Sim' : 'Não');
-        console.log('AuthContext: Refresh token encontrado:', refreshToken ? 'Sim' : 'Não');
-        
-        // Definir expiração da sessão para 10 minutos
-        const expiresAt = Date.now() + (10 * 60 * 1000); // 10 minutos em millisegundos
-        
-        setUser(response);
+        const refreshToken = response.refreshToken || response.token;
+        const expiresAt = Date.now() + (10 * 60 * 1000);
+  
+         // Buscar os dados completos do usuário para pegar o role
+         const userDetails = await authService.getUserById(response.id);
+         
+ 
+         if (userDetails.role !== "admin" && userDetails.role !== "user") {
+           // Usar uma classe de erro personalizada para evitar logs de erro desnecessários
+           const roleError = new Error("Usuário não cadastrado no sistema");
+           roleError.name = "RoleValidationError";
+           throw roleError;
+         }
+  
+        // Gravar usuário + role válido
+        const userWithRole = { ...response, role: userDetails.role };
+  
+        setUser(userWithRole);
         setToken(token);
         setSessionExpiresAt(expiresAt);
-        
+  
         localStorage.setItem('token', token);
         localStorage.setItem('refreshToken', refreshToken);
-        localStorage.setItem('user', JSON.stringify(response));
+        localStorage.setItem('user', JSON.stringify(userWithRole));
         localStorage.setItem('sessionExpiresAt', expiresAt.toString());
-        
-        console.log('AuthContext: Login bem-sucedido, sessão expira em:', new Date(expiresAt));
+  
         return true;
       }
-      
-      console.log('AuthContext: Nenhum token encontrado na resposta');
+  
       return false;
-    } catch (error) {
-      console.error('AuthContext: Erro no login:', error);
-      return false;
-    }
+     } catch (error) {
+       // Verificar se é erro de role inválido (comportamento esperado)
+       const errorName = error instanceof Error ? error.name : '';
+       const errorMessage = error instanceof Error ? error.message : '';
+       
+       if (errorName === 'RoleValidationError' || errorMessage === 'Usuário não cadastrado no sistema') {
+       } else {
+         console.error('AuthContext: Erro no login:', error);
+       }
+       // Re-lançar o erro para que seja capturado na página de login
+       throw error;
+     }
   };
+  
 
   const refreshUserData = useCallback(async () => {
     try {
@@ -255,7 +260,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const timeUntilExpiry = sessionExpiresAt - now;
       
       if (timeUntilExpiry > 0) {
-        console.log('AuthContext: Tentativa manual de refresh...');
         await refreshToken();
       }
     }
