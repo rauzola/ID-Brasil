@@ -12,7 +12,7 @@ const SessionStatus: React.FC = () => {
 
   const now = Date.now();
   const timeUntilExpiry = sessionExpiresAt - now;
-  const totalSessionTime = 60 * 1000; // 1 minuto em millisegundos
+  const totalSessionTime = 10 * 60 * 1000; // 10 minutos em millisegundos
   const remainingTime = Math.max(0, timeUntilExpiry);
   const progressPercent = Math.max(0, (remainingTime / totalSessionTime) * 100);
   const remainingSeconds = Math.ceil(remainingTime / 1000);

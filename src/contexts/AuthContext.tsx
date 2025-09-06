@@ -92,7 +92,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const expiresAt = parseInt(savedExpiresAt);
       const now = Date.now();
       
-      // Verificar se a sessão ainda é válida (1 minuto)
+      // Verificar se a sessão ainda é válida (10 minutos)
       if (expiresAt > now) {
         setToken(savedToken);
         setUser(JSON.parse(savedUser));
@@ -125,7 +125,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (response.token || response.accessToken) {
         const newToken = response.token || response.accessToken;
         const newRefreshToken = response.refreshToken || newToken;
-        const expiresAt = Date.now() + (1 * 60 * 1000); // 1 minuto de sessão
+        const expiresAt = Date.now() + (10 * 60 * 1000); // 10 minutos de sessão
         
         setToken(newToken);
         setSessionExpiresAt(expiresAt);
@@ -166,15 +166,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const now = Date.now();
       const timeUntilExpiry = sessionExpiresAt - now;
       
-      // Marcar como expirando se restam menos de 30 segundos
-      if (timeUntilExpiry < 30 * 1000 && timeUntilExpiry > 0) {
+      // Marcar como expirando se restam menos de 3 minutos
+      if (timeUntilExpiry < 3 * 60 * 1000 && timeUntilExpiry > 0) {
         setIsSessionExpiring(true);
       } else {
         setIsSessionExpiring(false);
       }
       
-      // Se restam menos de 15 segundos, tentar refresh automático
-      if (timeUntilExpiry < 15 * 1000 && timeUntilExpiry > 0 && !isRefreshing) {
+      // Se restam menos de 2 minutos, tentar refresh automático
+      if (timeUntilExpiry < 2 * 60 * 1000 && timeUntilExpiry > 0 && !isRefreshing) {
         console.log('AuthContext: Sessão próxima do vencimento, tentando refresh automático...');
         const success = await refreshToken();
         if (success) {
@@ -195,8 +195,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Verificar imediatamente
     checkAndRefreshToken();
 
-    // Verificar a cada 5 segundos (para sessão de 1 minuto)
-    const interval = setInterval(checkAndRefreshToken, 5 * 1000);
+    // Verificar a cada 30 segundos (para sessão de 10 minutos)
+    const interval = setInterval(checkAndRefreshToken, 30 * 1000);
 
     return () => clearInterval(interval);
   }, [isAuthenticated, sessionExpiresAt, isRefreshing, refreshToken, refreshAttempts]);
@@ -215,8 +215,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.log('AuthContext: Token encontrado:', token ? 'Sim' : 'Não');
         console.log('AuthContext: Refresh token encontrado:', refreshToken ? 'Sim' : 'Não');
         
-        // Definir expiração da sessão para 1 minuto
-        const expiresAt = Date.now() + (1 * 60 * 1000); // 1 minuto em millisegundos
+        // Definir expiração da sessão para 10 minutos
+        const expiresAt = Date.now() + (10 * 60 * 1000); // 10 minutos em millisegundos
         
         setUser(response);
         setToken(token);

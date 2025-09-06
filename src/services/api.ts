@@ -104,7 +104,7 @@ export const authService = {
 
       const response = await api.post('/auth/refresh', {
         refreshToken: refreshToken,
-        expiresInMins: 1 // 1 minuto para teste
+        expiresInMins: 10 // 10 minutos
       });
       return response.data;
     } catch (error: unknown) {
