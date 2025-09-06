@@ -1,12 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Form, Input, Button, Card, Typography, Space, App } from 'antd';
+import { Layout, Form, Input, Button, Card, Typography, Space, App } from 'antd';
 import { UserOutlined, LockOutlined, LoginOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import Header from '@/components/Header';
 
 const { Title, Text } = Typography;
+const { Content } = Layout;
 
 interface LoginFormData {
   username: string;
@@ -62,22 +64,23 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      padding: '20px'
-    }}>
-      <Card
-        style={{
-          width: '100%',
-          maxWidth: '400px',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-          borderRadius: '12px'
-        }}
-      >
+    <Layout style={{ minHeight: '100vh' }}>
+      <Header />
+      <Content style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        padding: '20px'
+      }}>
+        <Card
+          style={{
+            width: '100%',
+            maxWidth: '400px',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+            borderRadius: '12px'
+          }}
+        >
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
           <div style={{ textAlign: 'center' }}>
             <LoginOutlined style={{ fontSize: '48px', color: '#1890ff', marginBottom: '16px' }} />
@@ -148,7 +151,8 @@ export default function LoginPage() {
             </Text>
           </div>
         </Space>
-      </Card>
-    </div>
+        </Card>
+      </Content>
+    </Layout>
   );
 }

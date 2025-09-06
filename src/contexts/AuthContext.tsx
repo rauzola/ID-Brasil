@@ -14,6 +14,7 @@ interface User {
   token?: string;
   accessToken?: string;
   refreshToken?: string;
+  role?: 'admin' | 'user';
 }
 
 interface AuthContextType {

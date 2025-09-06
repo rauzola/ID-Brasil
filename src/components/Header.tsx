@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Layout, Switch, Typography, Space, Button, Dropdown } from 'antd';
-import { SunOutlined, MoonOutlined, UserOutlined, LogoutOutlined } from '@ant-design/icons';
+import { SunOutlined, MoonOutlined, UserOutlined, LogoutOutlined, CrownOutlined } from '@ant-design/icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -32,6 +32,21 @@ const Header: React.FC = () => {
       label: user?.email,
       disabled: true,
     },
+    {
+      type: 'divider' as const,
+    },
+    {
+      key: 'dashboard',
+      icon: <UserOutlined />,
+      label: 'Dashboard',
+      onClick: () => router.push('/dashboard'),
+    },
+    ...(user?.role === 'admin' ? [{
+      key: 'admin',
+      icon: <CrownOutlined />,
+      label: 'Painel Admin',
+      onClick: () => router.push('/admin'),
+    }] : []),
     {
       type: 'divider' as const,
     },
