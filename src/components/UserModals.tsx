@@ -1,33 +1,31 @@
 import React from 'react';
-import { Modal, Form, Input, Select, InputNumber, Button, Space, Row, Col } from 'antd';
+import { Modal, Form, Input, Select, InputNumber, Button, Space, Row, Col, FormInstance } from 'antd';
 import { PlusOutlined, EditOutlined } from '@ant-design/icons';
 
-interface UserData {
-  id: number;
+interface UserFormValues {
   firstName: string;
   lastName: string;
   username: string;
   email: string;
+  password?: string;
+  age?: number;
   gender: string;
-  image: string;
   role: string;
 }
 
 interface UserModalsProps {
   isAddModalVisible: boolean;
   isEditModalVisible: boolean;
-  editingUser: UserData | null;
-  form: any;
+  form: FormInstance;
   onAddModalClose: () => void;
   onEditModalClose: () => void;
-  onAddUserSubmit: (values: any) => void;
-  onEditUserSubmit: (values: any) => void;
+  onAddUserSubmit: (values: UserFormValues) => void;
+  onEditUserSubmit: (values: UserFormValues) => void;
 }
 
 export default function UserModals({
   isAddModalVisible,
   isEditModalVisible,
-  editingUser,
   form,
   onAddModalClose,
   onEditModalClose,

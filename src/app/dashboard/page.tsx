@@ -121,8 +121,8 @@ export default function DashboardPage() {
     lastName: string;
     username: string;
     email: string;
-    password: string;
-    age: number;
+    password?: string;
+    age?: number;
     gender: string;
     role: string;
   }) => {
@@ -296,7 +296,6 @@ export default function DashboardPage() {
       <UserModals
         isAddModalVisible={isAddModalVisible}
         isEditModalVisible={isEditModalVisible}
-        editingUser={editingUser}
         form={form}
         onAddModalClose={handleAddModalClose}
         onEditModalClose={handleEditModalClose}
