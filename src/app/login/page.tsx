@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Layout, Form, Input, Button, Card, Typography, Space, App } from 'antd';
 import { UserOutlined, LockOutlined, LoginOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
@@ -10,19 +10,111 @@ import Header from '@/components/Header';
 const { Title, Text } = Typography;
 const { Content } = Layout;
 
+// Interface para dados do formulário de login
 interface LoginFormData {
   username: string;
   password: string;
 }
 
+// Configurações de estilo para a página
+const PAGE_STYLES = {
+  minHeight: '100vh',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  padding: '20px',
+} as const;
+
+// Configurações de estilo para o card de login
+const CARD_STYLES = {
+  width: '100%',
+  maxWidth: '400px',
+  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+  borderRadius: '12px',
+} as const;
+
+// Configurações de estilo para o ícone de login
+const LOGIN_ICON_STYLES = {
+  fontSize: '48px',
+  color: '#1890ff',
+  marginBottom: '16px',
+} as const;
+
+// Configurações de estilo para o título
+const TITLE_STYLES = {
+  margin: 0,
+  color: '#1890ff',
+} as const;
+
+// Configurações de estilo para o container do ícone e título
+const HEADER_CONTAINER_STYLES = {
+  textAlign: 'center' as const,
+} as const;
+
+// Configurações de estilo para as credenciais de teste
+const CREDENTIALS_STYLES = {
+  textAlign: 'center' as const,
+} as const;
+
+// Configurações de estilo para o texto das credenciais
+const CREDENTIALS_TEXT_STYLES = {
+  fontSize: '12px',
+} as const;
+
+// Credenciais de teste para demonstração
+const TEST_CREDENTIALS = [
+  { username: 'emilys', password: 'emilyspass', role: 'admin' },
+  { username: 'kminchelle', password: '0lelplR', role: 'user' },
+] as const;
+
+// Roles permitidos no sistema
+const ALLOWED_ROLES = ['admin', 'user'] as const;
+
+/**
+ * Página de login da aplicação
+ * Permite autenticação de usuários com validação de credenciais
+ */
 export default function LoginPage() {
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { login } = useAuth();
   const { message } = App.useApp();
 
-  const onFinish = async (values: LoginFormData) => {
-    setLoading(true);
+  /**
+   * Trata erros de login de forma específica
+   */
+  const handleLoginError = useCallback((error: unknown) => {
+    const errorMessage = error instanceof Error ? error.message : '';
+    const errorName = error instanceof Error ? error.name : '';
+    
+    // Tratar erro específico de usuário não cadastrado
+    if (errorMessage === 'Usuário não cadastrado no sistema' || errorName === 'RoleValidationError') {
+      message.error('Usuário não cadastrado no sistema');
+      return;
+    }
+    
+    const axiosError = error as { response?: { status?: number }; code?: string };
+    
+    // Tratar diferentes tipos de erro
+    if (axiosError.response?.status === 400) {
+      message.error('Credenciais inválidas. Verifique o usuário e senha.');
+    } else if (axiosError.response?.status === 401) {
+      message.error('Usuário ou senha incorretos.');
+    } else if (axiosError.response?.status === 429) {
+      message.error('Muitas tentativas. Tente novamente em alguns minutos.');
+    } else if (axiosError.code === 'NETWORK_ERROR' || !axiosError.response) {
+      message.error('Erro de conexão. Verifique sua internet.');
+    } else {
+      message.error('Erro ao realizar login. Tente novamente.');
+    }
+  }, [message]);
+
+  /**
+   * Processa o envio do formulário de login
+   */
+  const handleFormSubmit = useCallback(async (values: LoginFormData) => {
+    setIsLoading(true);
     
     try {
       const success = await login(values.username, values.password);
@@ -34,123 +126,110 @@ export default function LoginPage() {
         message.error('Nome de usuário ou senha incorretos');
       }
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : '';
-      const errorName = error instanceof Error ? error.name : '';
-      
-      // Tratar erro específico de usuário não cadastrado
-      if (errorMessage === 'Usuário não cadastrado no sistema' || errorName === 'RoleValidationError') {
-        message.error('Usuário não cadastrado no sistema');
-        return;
-      }
-      
-      
-      const axiosError = error as { response?: { status?: number }; code?: string };
-      
-      // Tratar diferentes tipos de erro
-      if (axiosError.response?.status === 400) {
-        message.error('Credenciais inválidas. Verifique o usuário e senha.');
-      } else if (axiosError.response?.status === 401) {
-        message.error('Usuário ou senha incorretos.');
-      } else if (axiosError.response?.status === 429) {
-        message.error('Muitas tentativas. Tente novamente em alguns minutos.');
-      } else if (axiosError.code === 'NETWORK_ERROR' || !axiosError.response) {
-        message.error('Erro de conexão. Verifique sua internet.');
-      } else {
-        message.error('Erro ao realizar login. Tente novamente.');
-      }
+      handleLoginError(error);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
-  };
+  }, [login, router, message, handleLoginError]);
+
+  /**
+   * Renderiza o cabeçalho da página de login
+   */
+  const renderLoginHeader = useCallback(() => (
+    <div style={HEADER_CONTAINER_STYLES}>
+      <LoginOutlined style={LOGIN_ICON_STYLES} />
+      <Title level={2} style={TITLE_STYLES}>
+        ID Brasil
+      </Title>
+      <Text type="secondary">
+        Faça login para acessar o sistema
+      </Text>
+    </div>
+  ), []);
+
+  /**
+   * Renderiza as credenciais de teste
+   */
+  const renderTestCredentials = useCallback(() => (
+    <div style={CREDENTIALS_STYLES}>
+      <Text type="secondary" style={CREDENTIALS_TEXT_STYLES}>
+        <div>Credenciais de teste (roles permitidos: {ALLOWED_ROLES.join(', ')}):</div>
+        {TEST_CREDENTIALS.map((credential, index) => (
+          <div key={index}>
+            <strong>{credential.username}</strong> / <strong>{credential.password}</strong> 
+            <span style={{ color: credential.role === 'admin' ? '#faad14' : '#52c41a', marginLeft: '8px' }}>
+              ({credential.role})
+            </span>
+          </div>
+        ))}
+        <div style={{ marginTop: '8px', fontSize: '10px', color: '#ff4d4f' }}>
+          ⚠️ Apenas usuários com role &quot;admin&quot; ou &quot;user&quot; podem fazer login
+        </div>
+      </Text>
+    </div>
+  ), []);
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <Header />
-      <Content style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        padding: '20px'
-      }}>
-        <Card
-          style={{
-            width: '100%',
-            maxWidth: '400px',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-            borderRadius: '12px'
-          }}
-        >
-        <Space direction="vertical" size="large" style={{ width: '100%' }}>
-          <div style={{ textAlign: 'center' }}>
-            <LoginOutlined style={{ fontSize: '48px', color: '#1890ff', marginBottom: '16px' }} />
-            <Title level={2} style={{ margin: 0, color: '#1890ff' }}>
-              ID Brasil
-            </Title>
-            <Text type="secondary">
-              Faça login para acessar o sistema
-            </Text>
-          </div>
+      <Content style={PAGE_STYLES}>
+        <Card style={CARD_STYLES}>
+          <Space direction="vertical" size="large" style={{ width: '100%' }}>
+            {renderLoginHeader()}
 
-          <Form
-            name="login"
-            onFinish={onFinish}
-            autoComplete="off"
-            layout="vertical"
-            size="large"
-          >
-            <Form.Item
-              label="Nome de Usuário"
-              name="username"
-              rules={[
-                { required: true, message: 'Por favor, insira seu nome de usuário!' },
-                { min: 3, message: 'Nome de usuário deve ter pelo menos 3 caracteres!' }
-              ]}
+            <Form
+              name="login"
+              onFinish={handleFormSubmit}
+              autoComplete="off"
+              layout="vertical"
+              size="large"
             >
-              <Input
-                prefix={<UserOutlined />}
-                placeholder="Digite seu nome de usuário"
-                autoComplete="username"
-              />
-            </Form.Item>
-
-            <Form.Item
-              label="Senha"
-              name="password"
-              rules={[
-                { required: true, message: 'Por favor, insira sua senha!' },
-                { min: 6, message: 'Senha deve ter pelo menos 6 caracteres!' }
-              ]}
-            >
-              <Input.Password
-                prefix={<LockOutlined />}
-                placeholder="Digite sua senha"
-                autoComplete="current-password"
-              />
-            </Form.Item>
-
-            <Form.Item style={{ marginBottom: 0 }}>
-              <Button
-                type="primary"
-                htmlType="submit"
-                loading={loading}
-                block
-                size="large"
-                icon={<LoginOutlined />}
+              <Form.Item
+                label="Nome de Usuário"
+                name="username"
+                rules={[
+                  { required: true, message: 'Por favor, insira seu nome de usuário!' },
+                  { min: 3, message: 'Nome de usuário deve ter pelo menos 3 caracteres!' }
+                ]}
               >
-                Entrar
-              </Button>
-            </Form.Item>
-          </Form>
+                <Input
+                  prefix={<UserOutlined />}
+                  placeholder="Digite seu nome de usuário"
+                  autoComplete="username"
+                />
+              </Form.Item>
 
-          <div style={{ textAlign: 'center' }}>
-            <Text type="secondary" style={{ fontSize: '12px' }}>
-              <div>Credenciais de teste:</div>
-              <div><strong>emilys</strong> / <strong>emilyspass</strong></div>
-              <div><strong>kminchelle</strong> / <strong>0lelplR</strong></div>
-            </Text>
-          </div>
-        </Space>
+              <Form.Item
+                label="Senha"
+                name="password"
+                rules={[
+                  { required: true, message: 'Por favor, insira sua senha!' },
+                  { min: 6, message: 'Senha deve ter pelo menos 6 caracteres!' }
+                ]}
+              >
+                <Input.Password
+                  prefix={<LockOutlined />}
+                  placeholder="Digite sua senha"
+                  autoComplete="current-password"
+                />
+              </Form.Item>
+
+              <Form.Item style={{ marginBottom: 0 }}>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  loading={isLoading}
+                  block
+                  size="large"
+                  icon={<LoginOutlined />}
+                >
+                  Entrar
+                </Button>
+              </Form.Item>
+            </Form>
+
+            {renderTestCredentials()}
+          </Space>
         </Card>
       </Content>
     </Layout>

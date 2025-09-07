@@ -19,7 +19,7 @@ import Header from '@/components/Header';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
-import { authService } from '@/services/api';
+import { userManagementService } from '@/services/api';
 import { UserDetailedInfo } from '@/types/user';
 
 const { Content } = Layout;
@@ -118,7 +118,7 @@ export default function UserDetailsPage() {
       }
       
       // Se não encontrou no localStorage, buscar da API
-      const response = await authService.getUserById(parseInt(userId));
+      const response = await userManagementService.getUserById(parseInt(userId));
       setUserDetails(response);
     } catch (error) {
       console.error('Erro ao buscar detalhes do usuário:', error);

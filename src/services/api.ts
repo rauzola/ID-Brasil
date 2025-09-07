@@ -1,246 +1,231 @@
-import axios from 'axios';
+import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
+import { 
+  UserDetailedInfo, 
+  UserFormData, 
+  UsersApiResponse,
+  UserOperationResponse 
+} from '@/types/user';
 
-interface UserData {
-  id: number;
-  firstName: string;
-  lastName: string;
-  username: string;
-  email: string;
-  gender: string;
-  image: string;
-  role: string;
-}
-
-const api = axios.create({
+// Configurações da API
+const API_CONFIG = {
   baseURL: 'https://dummyjson.com',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
-});
+} as const;
 
-// Interceptor para requisições
-api.interceptors.request.use(
-  (config) => {
-    // Adicionar token de autenticação se disponível
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+// Configurações de autenticação
+const AUTH_CONFIG = {
+  tokenKey: 'token',
+  refreshEndpoint: '/auth/refresh',
+} as const;
+
+// Instância do cliente HTTP
+const httpClient: AxiosInstance = axios.create(API_CONFIG);
+
+/**
+ * Interceptor de requisições
+ * Adiciona token de autenticação automaticamente
+ */
+httpClient.interceptors.request.use(
+  (config: InternalAxiosRequestConfig) => {
+    const authToken = localStorage.getItem(AUTH_CONFIG.tokenKey);
+    if (authToken && config.headers) {
+      config.headers.Authorization = `Bearer ${authToken}`;
     }
     return config;
   },
   (error) => {
+    console.error('Erro no interceptor de requisição:', error);
     return Promise.reject(error);
   }
 );
 
-// Interceptor para respostas
-api.interceptors.response.use(
-  (response) => {
+/**
+ * Interceptor de respostas
+ * Trata erros globais e redirecionamentos
+ */
+httpClient.interceptors.response.use(
+  (response: AxiosResponse) => {
     return response;
   },
   (error) => {
     // Tratamento global de erros
     if (error.response?.status === 401) {
-      // Verificar se é uma requisição de refresh token
-      const isRefreshRequest = error.config?.url?.includes('/auth/refresh');
-      
-      if (!isRefreshRequest) {
-        // Apenas redirecionar para login se NÃO for uma tentativa de refresh
-        localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('user');
-        localStorage.removeItem('sessionExpiresAt');
-        window.location.href = '/login';
-      } else {
-      }
+      handleUnauthorizedError(error);
+    } else if (error.response?.status === 403) {
+      console.error('Acesso negado:', error.response.data);
+    } else if (error.response?.status >= 500) {
+      console.error('Erro interno do servidor:', error.response.data);
+    } else if (!error.response) {
+      console.error('Erro de rede:', error.message);
     }
+    
     return Promise.reject(error);
   }
 );
 
-// Serviços de autenticação
-export const authService = {
-  // Login
+/**
+ * Trata erros de autorização (401)
+ */
+const handleUnauthorizedError = (error: unknown) => {
+  const axiosError = error as { config?: { url?: string } };
+  const isRefreshRequest = axiosError.config?.url?.includes(AUTH_CONFIG.refreshEndpoint);
+  
+  if (!isRefreshRequest) {
+    // Limpar dados de autenticação
+    localStorage.removeItem(AUTH_CONFIG.tokenKey);
+    localStorage.removeItem('user');
+    
+    // Redirecionar para login se não estiver na página de login
+    if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+      window.location.href = '/login';
+    }
+  }
+};
+
+/**
+ * Trata erros da API de forma consistente
+ */
+const handleApiError = (error: unknown, operation: string) => {
+  console.error(`Erro na operação ${operation}:`, error);
+  
+  const axiosError = error as { response?: { data?: { message?: string } }; message?: string };
+  
+  if (axiosError.response?.data?.message) {
+    throw new Error(axiosError.response.data.message);
+  } else if (axiosError.message) {
+    throw new Error(axiosError.message);
+  } else {
+    throw new Error(`Erro na operação ${operation}`);
+  }
+};
+
+/**
+ * Serviço de autenticação
+ * Gerencia login, logout e operações relacionadas à autenticação
+ */
+export const authenticationService = {
+  /**
+   * Realiza login do usuário
+   */
   login: async (username: string, password: string) => {
     try {
-      const response = await api.post('/auth/login', {
+      const response = await httpClient.post('/auth/login', {
         username,
         password,
-        expiresInMins: 30, // Token expira em 30 minutos
       });
       return response.data;
-    } catch (error: unknown) {
-      const axiosError = error as { response?: { data?: unknown; status?: number }; message?: string; status?: number };
-      const errorMessage = axiosError.response?.data || axiosError.message || 'Erro desconhecido';
-      const statusCode = axiosError.response?.status || axiosError.status;
-      
-      console.error('Erro no login:', {
-        message: errorMessage,
-        status: statusCode,
-        fullError: error
-      });
-      throw error;
+    } catch (error) {
+      return handleApiError(error, 'login');
     }
   },
 
-  // Obter dados do usuário atual
-  getMe: async () => {
+  /**
+   * Obtém dados do usuário atual
+   */
+  getCurrentUser: async (): Promise<UserDetailedInfo> => {
     try {
-      const response = await api.get('/auth/me');
-      return response.data;
-    } catch (error: unknown) {
-      const axiosError = error as { response?: { data?: unknown; status?: number }; message?: string; status?: number };
-      const errorMessage = axiosError.response?.data || axiosError.message || 'Erro desconhecido';
-      const statusCode = axiosError.response?.status || axiosError.status;
-      
-      console.error('Erro ao obter dados do usuário:', {
-        message: errorMessage,
-        status: statusCode,
-        fullError: error
-      });
-      throw error;
-    }
-  },
-
-  // Refresh token
-  refreshToken: async () => {
-    try {
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (!refreshToken) {
-        throw new Error('Refresh token não encontrado');
-      }
-
-      const response = await api.post('/auth/refresh', {
-        refreshToken: refreshToken,
-        expiresInMins: 10 // 10 minutos
-      });
-      return response.data;
-    } catch (error: unknown) {
-      const axiosError = error as { response?: { data?: unknown; status?: number }; message?: string; status?: number };
-      const errorMessage = axiosError.response?.data || axiosError.message || 'Erro desconhecido';
-      const statusCode = axiosError.response?.status || axiosError.status;
-      
-      console.error('Erro ao renovar token:', {
-        message: errorMessage,
-        status: statusCode,
-        fullError: error
-      });
-      throw error;
-    }
-  },
-
-  getUserById: async (id: number) => {
-    try {
-      const response = await api.get(`/users/${id}`);
+      const response = await httpClient.get('/auth/me');
       return response.data;
     } catch (error) {
-      console.error('Erro ao obter dados do usuário:', error);
-      throw error;
+      return handleApiError(error, 'getCurrentUser');
     }
   },
 
-  // Buscar todos os usuários
-  getUsers: async (limit: number = 30, skip: number = 0) => {
+  /**
+   * Renova o token de autenticação
+   */
+  refreshAuthenticationToken: async () => {
     try {
-      const response = await api.get(`/users?limit=${limit}&skip=${skip}`);
+      const response = await httpClient.post(AUTH_CONFIG.refreshEndpoint);
       return response.data;
     } catch (error) {
-      console.error('Erro ao obter lista de usuários:', error);
-      throw error;
-    }
-  },
-
-  // Buscar todos os usuários (sem paginação da API)
-  getAllUsers: async () => {
-    try {
-      // A API DummyJSON retorna 208 usuários no total
-      // Vamos buscar em lotes de 100 para obter todos os usuários
-      const allUsers: UserData[] = [];
-      let skip = 0;
-      const limit = 100;
-      let hasMore = true;
-
-      while (hasMore) {
-        const response = await api.get(`/users?limit=${limit}&skip=${skip}`);
-        const data = response.data;
-        
-        if (data.users && data.users.length > 0) {
-          allUsers.push(...data.users);
-          skip += limit;
-          
-          // Se retornou menos que o limite, chegamos ao fim
-          if (data.users.length < limit) {
-            hasMore = false;
-          }
-        } else {
-          hasMore = false;
-        }
-      }
-
-      return {
-        users: allUsers,
-        total: allUsers.length,
-        skip: 0,
-        limit: allUsers.length
-      };
-    } catch (error) {
-      console.error('Erro ao obter todos os usuários:', error);
-      throw error;
-    }
-  },
-
-  // Adicionar novo usuário
-  addUser: async (userData: {
-    firstName: string;
-    lastName: string;
-    username: string;
-    email: string;
-    password: string;
-    age: number;
-    gender: string;
-    role?: string;
-  }) => {
-    try {
-      const response = await api.post('/users/add', userData);
-      return response.data;
-    } catch (error) {
-      console.error('Erro ao adicionar usuário:', error);
-      throw error;
-    }
-  },
-
-  // Atualizar usuário
-  updateUser: async (id: number, userData: {
-    firstName?: string;
-    lastName?: string;
-    username?: string;
-    email?: string;
-    age?: number;
-    gender?: string;
-    role?: string;
-  }) => {
-    try {
-      const response = await api.put(`/users/${id}`, userData);
-      return response.data;
-    } catch (error) {
-      console.error('Erro ao atualizar usuário:', error);
-      throw error;
-    }
-  },
-
-  // Excluir usuário
-  deleteUser: async (id: number) => {
-    try {
-      const response = await api.delete(`/users/${id}`);
-      return response.data;
-    } catch (error) {
-      console.error('Erro ao excluir usuário:', error);
-      throw error;
+      return handleApiError(error, 'refreshToken');
     }
   },
 };
 
+/**
+ * Serviço de gerenciamento de usuários
+ * Gerencia operações CRUD de usuários
+ */
+export const userManagementService = {
+  /**
+   * Obtém um usuário por ID
+   */
+  getUserById: async (userId: number): Promise<UserDetailedInfo> => {
+    try {
+      const response = await httpClient.get(`/users/${userId}`);
+      return response.data;
+    } catch (error) {
+      return handleApiError(error, 'getUserById');
+    }
+  },
 
+  /**
+   * Obtém todos os usuários
+   */
+  getAllUsers: async (): Promise<UsersApiResponse> => {
+    try {
+      // Usar limit=0 para obter todos os usuários da API dummyjson
+      const response = await httpClient.get('/users?limit=0');
+      return response.data;
+    } catch (error) {
+      return handleApiError(error, 'getAllUsers');
+    }
+  },
 
-export default api;
+  /**
+   * Cria um novo usuário
+   */
+  createUser: async (userData: UserFormData): Promise<UserOperationResponse> => {
+    try {
+      const response = await httpClient.post('/users/add', userData);
+      return response.data;
+    } catch (error) {
+      return handleApiError(error, 'createUser');
+    }
+  },
+
+  /**
+   * Atualiza um usuário existente
+   */
+  updateUser: async (userId: number, userData: Partial<UserFormData>): Promise<UserOperationResponse> => {
+    try {
+      const response = await httpClient.put(`/users/${userId}`, userData);
+      return response.data;
+    } catch (error) {
+      return handleApiError(error, 'updateUser');
+    }
+  },
+
+  /**
+   * Remove um usuário
+   */
+  deleteUser: async (userId: number): Promise<UserOperationResponse> => {
+    try {
+      const response = await httpClient.delete(`/users/${userId}`);
+      return response.data;
+    } catch (error) {
+      return handleApiError(error, 'deleteUser');
+    }
+  },
+};
+
+// Aliases para compatibilidade com código existente
+/**
+ * @deprecated Use authenticationService instead
+ */
+export const authService = authenticationService;
+
+/**
+ * @deprecated Use userManagementService instead
+ */
+export const userService = userManagementService;
+
+/**
+ * @deprecated Use httpClient instead
+ */
+export const api = httpClient;

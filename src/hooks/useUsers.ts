@@ -1,7 +1,21 @@
 import { useState, useEffect, useCallback } from 'react';
 import { message } from 'antd';
-import { authService } from '@/services/api';
+import { userManagementService } from '@/services/api';
+import { UserRole, UserStatistics } from '@/types/user';
 
+// Configurações do hook
+const STORAGE_CONFIG = {
+  usersKey: 'users',
+  cacheExpirationKey: 'usersCacheExpiration',
+  cacheExpirationTime: 5 * 60 * 1000, // 5 minutos
+} as const;
+
+const LOADING_CONFIG = {
+  progressInterval: 100,
+  maxProgress: 100,
+} as const;
+
+// Interface para dados do usuário (compatibilidade com componentes existentes)
 interface UserData {
   id: number;
   firstName: string;
@@ -13,240 +27,328 @@ interface UserData {
   role: string;
 }
 
-interface UserStats {
-  total: number;
-  admins: number;
-  users: number;
-  moderators: number;
-}
-
-export function useUsers(userRole?: string) {
-  const [filteredUsers, setFilteredUsers] = useState<UserData[]>([]);
-  const [usersLoading, setUsersLoading] = useState(false);
-  const [loadingProgress, setLoadingProgress] = useState(0);
-  const [totalUsers, setTotalUsers] = useState(0);
-  const [stats, setStats] = useState<UserStats>({
-    total: 0,
-    admins: 0,
-    users: 0,
-    moderators: 0
+/**
+ * Hook personalizado para gerenciar usuários
+ * Fornece funcionalidades de CRUD, cache e filtros baseados em roles
+ */
+export function useUsers(currentUserRole?: UserRole) {
+  // Estados principais
+  const [filteredUsersList, setFilteredUsersList] = useState<UserData[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [loadingProgressPercentage, setLoadingProgressPercentage] = useState(0);
+  const [totalUsersCount, setTotalUsersCount] = useState(0);
+  const [userStatistics, setUserStatistics] = useState<UserStatistics>({
+    totalUsers: 0,
+    adminUsers: 0,
+    regularUsers: 0,
+    moderatorUsers: 0
   });
 
-  // Função para carregar dados do localStorage
-  const loadUsersFromLocalStorage = (): UserData[] => {
+  /**
+   * Carrega usuários do cache local
+   */
+  const loadUsersFromCache = useCallback((): UserData[] => {
     try {
-      const stored = localStorage.getItem('users');
-      return stored ? JSON.parse(stored) : [];
+      const storedUsers = localStorage.getItem(STORAGE_CONFIG.usersKey);
+      return storedUsers ? JSON.parse(storedUsers) : [];
     } catch (error) {
-      console.error('Erro ao carregar usuários do localStorage:', error);
+      console.error('Erro ao carregar usuários do cache:', error);
       return [];
     }
-  };
-
-  // Função para salvar dados no localStorage
-  const saveUsersToLocalStorage = (users: UserData[]) => {
-    try {
-      localStorage.setItem('users', JSON.stringify(users));
-    } catch (error) {
-      console.error('Erro ao salvar usuários no localStorage:', error);
-    }
-  };
-
-  // Função para gerar ID único
-  const generateId = (): number => {
-    return Date.now() + Math.floor(Math.random() * 1000);
-  };
-
-  // Função para filtrar usuários baseado no role do usuário logado
-  const filterUsersByRole = useCallback((usersData: UserData[]) => {
-    if (!userRole) return usersData;
-    
-    // Admin pode ver todos os usuários
-    if (userRole === 'admin') {
-      return usersData;
-    }
-    
-    // User só pode ver outros users
-    if (userRole === 'user') {
-      return usersData.filter((userData: UserData) => userData.role === 'user');
-    }
-    
-    return usersData;
-  }, [userRole]);
-
-  // Função para calcular estatísticas
-  const calculateStats = useCallback((usersData: UserData[]) => {
-    return {
-      total: usersData.length,
-      admins: usersData.filter((userData: UserData) => userData.role === 'admin').length,
-      users: usersData.filter((userData: UserData) => userData.role === 'user').length,
-      moderators: usersData.filter((userData: UserData) => userData.role === 'moderator').length
-    };
   }, []);
 
-  // Função para buscar usuários
-  const fetchUsers = useCallback(async () => {
-    setUsersLoading(true);
-    setLoadingProgress(0);
+  /**
+   * Salva usuários no cache local
+   */
+  const saveUsersToCache = useCallback((users: UserData[]): void => {
     try {
-      // Primeiro, tentar carregar do localStorage
-      let usersData = loadUsersFromLocalStorage();
+      localStorage.setItem(STORAGE_CONFIG.usersKey, JSON.stringify(users));
+      localStorage.setItem(STORAGE_CONFIG.cacheExpirationKey, Date.now().toString());
+    } catch (error) {
+      console.error('Erro ao salvar usuários no cache:', error);
+    }
+  }, []);
+
+  /**
+   * Limpa o cache de usuários
+   */
+  const clearUsersCache = useCallback((): void => {
+    try {
+      localStorage.removeItem(STORAGE_CONFIG.usersKey);
+      localStorage.removeItem(STORAGE_CONFIG.cacheExpirationKey);
+    } catch (error) {
+      console.error('Erro ao limpar cache de usuários:', error);
+    }
+  }, []);
+
+  /**
+   * Verifica se o cache está expirado
+   */
+  const isCacheExpired = useCallback((): boolean => {
+    try {
+      const expirationTime = localStorage.getItem(STORAGE_CONFIG.cacheExpirationKey);
+      if (!expirationTime) return true;
       
-      // Se não há dados no localStorage, buscar da API
-      if (usersData.length === 0) {
-        setLoadingProgress(25);
-        const response = await authService.getAllUsers();
-        setLoadingProgress(75);
-        usersData = response.users || [];
-        // Salvar no localStorage para uso futuro
-        saveUsersToLocalStorage(usersData);
-        setLoadingProgress(90);
+      const timeSinceCache = Date.now() - parseInt(expirationTime);
+      return timeSinceCache > STORAGE_CONFIG.cacheExpirationTime;
+    } catch (error) {
+      console.error('Erro ao verificar expiração do cache:', error);
+      return true;
+    }
+  }, []);
+
+  /**
+   * Gera um ID único para novos usuários
+   */
+  const generateUniqueUserId = useCallback((): number => {
+    const existingUsers = loadUsersFromCache();
+    const maxId = existingUsers.reduce((max, user) => Math.max(max, user.id), 0);
+    return maxId + 1;
+  }, [loadUsersFromCache]);
+
+  /**
+   * Filtra usuários baseado no role do usuário atual
+   */
+  const filterUsersByCurrentUserRole = useCallback((usersData: UserData[]): UserData[] => {
+    if (!currentUserRole) return usersData;
+    
+    // Admins podem ver todos os usuários
+    if (currentUserRole === 'admin') return usersData;
+    
+    // Outros roles só podem ver usuários com role 'user'
+    return usersData.filter(user => user.role === 'user');
+  }, [currentUserRole]);
+
+  /**
+   * Calcula estatísticas dos usuários
+   */
+  const calculateUserStatistics = useCallback((usersData: UserData[]): UserStatistics => {
+    return usersData.reduce((stats, user) => {
+      stats.totalUsers++;
+      
+      switch (user.role) {
+        case 'admin':
+          stats.adminUsers++;
+          break;
+        case 'user':
+          stats.regularUsers++;
+          break;
+        case 'moderator':
+          stats.moderatorUsers++;
+          break;
       }
       
-      // Filtrar usuários baseado no role do usuário logado
-      const filteredData = filterUsersByRole(usersData);
-      setFilteredUsers(filteredData);
-      setTotalUsers(filteredData.length);
-      
-      // Calcular estatísticas apenas dos usuários visíveis
-      const newStats = calculateStats(filteredData);
-      setStats(newStats);
-      setLoadingProgress(100);
-    } catch (error) {
-      console.error('Erro ao buscar usuários:', error);
-      // Em caso de erro, tentar carregar do localStorage
-      const usersData = loadUsersFromLocalStorage();
-      const filteredData = filterUsersByRole(usersData);
-      setFilteredUsers(filteredData);
-      setTotalUsers(filteredData.length);
-      const newStats = calculateStats(filteredData);
-      setStats(newStats);
-    } finally {
-      setUsersLoading(false);
-      setLoadingProgress(0);
-    }
-  }, [filterUsersByRole, calculateStats]);
+      return stats;
+    }, {
+      totalUsers: 0,
+      adminUsers: 0,
+      regularUsers: 0,
+      moderatorUsers: 0
+    });
+  }, []);
 
-  // Função para recarregar dados
-  const refreshUsers = useCallback(async () => {
-    setUsersLoading(true);
-    setLoadingProgress(0);
+  /**
+   * Busca usuários da API ou cache
+   */
+  const fetchUsersFromApiOrCache = useCallback(async (): Promise<void> => {
+    setIsLoadingUsers(true);
+    setLoadingProgressPercentage(0);
+
     try {
-      // Buscar da API e atualizar localStorage
-      setLoadingProgress(25);
-      const response = await authService.getAllUsers();
-      setLoadingProgress(75);
-      const usersData = response.users || [];
-      saveUsersToLocalStorage(usersData);
-      setLoadingProgress(90);
+      // Verificar cache primeiro
+      if (!isCacheExpired()) {
+        const cachedUsers = loadUsersFromCache();
+        if (cachedUsers.length > 0) {
+          const filteredUsers = filterUsersByCurrentUserRole(cachedUsers);
+          const statistics = calculateUserStatistics(filteredUsers);
+          
+          setFilteredUsersList(filteredUsers);
+          setTotalUsersCount(filteredUsers.length);
+          setUserStatistics(statistics);
+          setIsLoadingUsers(false);
+          return;
+        }
+      }
+
+      // Simular progresso de carregamento
+      const progressInterval = setInterval(() => {
+        setLoadingProgressPercentage(prev => {
+          if (prev >= LOADING_CONFIG.maxProgress) {
+            clearInterval(progressInterval);
+            return LOADING_CONFIG.maxProgress;
+          }
+          return prev + 10;
+        });
+      }, LOADING_CONFIG.progressInterval);
+
+      // Buscar da API
+      const response = await userManagementService.getAllUsers();
+      const apiUsers = response.users || [];
       
-      // Filtrar usuários baseado no role do usuário logado
-      const filteredData = filterUsersByRole(usersData);
-      setFilteredUsers(filteredData);
-      setTotalUsers(filteredData.length);
+      console.log('API Response:', response);
+      console.log('Total users from API:', apiUsers.length);
       
-      // Calcular estatísticas apenas dos usuários visíveis
-      const newStats = calculateStats(filteredData);
-      setStats(newStats);
-      setLoadingProgress(100);
+      // Converter para o formato local
+      const usersData: UserData[] = apiUsers.map((user) => ({
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        username: user.username,
+        email: user.email,
+        gender: user.gender,
+        image: user.profileImageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`,
+        role: user.role || 'user',
+      }));
+      
+      console.log('Converted users:', usersData.length);
+      
+      // Salvar no cache
+      saveUsersToCache(usersData);
+      
+      // Filtrar e processar dados
+      const filteredUsers = filterUsersByCurrentUserRole(usersData);
+      const statistics = calculateUserStatistics(filteredUsers);
+      
+      console.log('Filtered users:', filteredUsers.length);
+      console.log('Current user role:', currentUserRole);
+      console.log('Statistics:', statistics);
+      
+      setFilteredUsersList(filteredUsers);
+      setTotalUsersCount(filteredUsers.length);
+      setUserStatistics(statistics);
+      
+      clearInterval(progressInterval);
+      setLoadingProgressPercentage(LOADING_CONFIG.maxProgress);
+      
     } catch (error) {
       console.error('Erro ao buscar usuários:', error);
-      // Em caso de erro, carregar do localStorage
-      const usersData = loadUsersFromLocalStorage();
-      const filteredData = filterUsersByRole(usersData);
-      setFilteredUsers(filteredData);
-      setTotalUsers(filteredData.length);
-      const newStats = calculateStats(filteredData);
-      setStats(newStats);
+      message.error('Erro ao carregar usuários');
     } finally {
-      setUsersLoading(false);
-      setLoadingProgress(0);
+      setIsLoadingUsers(false);
     }
-  }, [filterUsersByRole, calculateStats]);
+  }, [isCacheExpired, loadUsersFromCache, filterUsersByCurrentUserRole, calculateUserStatistics, saveUsersToCache, currentUserRole]);
 
-  // Função para adicionar avatar de usuário
-  const addUser = useCallback((userData: Omit<UserData, 'id' | 'image'>) => {
+  /**
+   * Atualiza usuários da API (ignora cache)
+   */
+  const refreshUsersFromApi = useCallback(async (): Promise<void> => {
+    console.log('Refreshing users from API...');
+    clearUsersCache();
+    await fetchUsersFromApiOrCache();
+  }, [clearUsersCache, fetchUsersFromApiOrCache]);
+
+  /**
+   * Adiciona um novo usuário
+   */
+  const createNewUser = useCallback((userData: Omit<UserData, 'id' | 'image'>) => {
+    try {
     const newUser: UserData = {
-      id: generateId(),
       ...userData,
+        id: generateUniqueUserId(),
       image: `https://api.dicebear.com/7.x/avataaars/svg?seed=${userData.username}`
     };
 
-    // Adicionar ao localStorage
-    const currentUsers = loadUsersFromLocalStorage();
-    const updatedUsers = [...currentUsers, newUser];
-    saveUsersToLocalStorage(updatedUsers);
+      const existingUsers = loadUsersFromCache();
+      const updatedUsers = [...existingUsers, newUser];
+      
+      saveUsersToCache(updatedUsers);
+      
+      const filteredUsers = filterUsersByCurrentUserRole(updatedUsers);
+      const statistics = calculateUserStatistics(filteredUsers);
+      
+      setFilteredUsersList(filteredUsers);
+      setTotalUsersCount(filteredUsers.length);
+      setUserStatistics(statistics);
+      
+      message.success(`Usuário "${newUser.firstName} ${newUser.lastName}" adicionado com sucesso!`);
+    } catch (error) {
+      console.error('Erro ao adicionar usuário:', error);
+      message.error('Erro ao adicionar usuário');
+    }
+  }, [generateUniqueUserId, loadUsersFromCache, saveUsersToCache, filterUsersByCurrentUserRole, calculateUserStatistics]);
 
-    // Atualizar estado local
-    const filteredData = filterUsersByRole(updatedUsers);
-    setFilteredUsers(filteredData);
-    setTotalUsers(filteredData.length);
-    
-    // Atualizar estatísticas
-    const newStats = calculateStats(filteredData);
-    setStats(newStats);
+  /**
+   * Atualiza um usuário existente
+   */
+  const updateExistingUser = useCallback((userId: number, userData: Partial<UserData>) => {
+    try {
+      const existingUsers = loadUsersFromCache();
+      const userIndex = existingUsers.findIndex(user => user.id === userId);
+      
+      if (userIndex === -1) {
+        message.error('Usuário não encontrado');
+        return;
+      }
 
-    message.success('Usuário adicionado com sucesso!');
-  }, [filterUsersByRole, calculateStats]);
+      const updatedUsers = [...existingUsers];
+      updatedUsers[userIndex] = { ...updatedUsers[userIndex], ...userData };
+      
+      saveUsersToCache(updatedUsers);
+      
+      const filteredUsers = filterUsersByCurrentUserRole(updatedUsers);
+      const statistics = calculateUserStatistics(filteredUsers);
+      
+      setFilteredUsersList(filteredUsers);
+      setTotalUsersCount(filteredUsers.length);
+      setUserStatistics(statistics);
+      
+      message.success(`Usuário "${userData.firstName || existingUsers[userIndex].firstName} ${userData.lastName || existingUsers[userIndex].lastName}" atualizado com sucesso!`);
+    } catch (error) {
+      console.error('Erro ao atualizar usuário:', error);
+      message.error('Erro ao atualizar usuário');
+    }
+  }, [loadUsersFromCache, saveUsersToCache, filterUsersByCurrentUserRole, calculateUserStatistics]);
 
-  // Função para editar usuário
-  const editUser = useCallback((userId: number, userData: Partial<UserData>) => {
-    // Atualizar no localStorage
-    const currentUsers = loadUsersFromLocalStorage();
-    const updatedUsers = currentUsers.map(user => 
-      user.id === userId 
-        ? { ...user, ...userData }
-        : user
-    );
-    saveUsersToLocalStorage(updatedUsers);
+  /**
+   * Remove um usuário
+   */
+  const removeUser = useCallback((userId: number) => {
+    try {
+      const existingUsers = loadUsersFromCache();
+      const userToDelete = existingUsers.find(user => user.id === userId);
+      
+      if (!userToDelete) {
+        message.error('Usuário não encontrado');
+        return;
+      }
 
-    // Atualizar estado local
-    const filteredData = filterUsersByRole(updatedUsers);
-    setFilteredUsers(filteredData);
-    setTotalUsers(filteredData.length);
-    
-    // Atualizar estatísticas
-    const newStats = calculateStats(filteredData);
-    setStats(newStats);
+      const updatedUsers = existingUsers.filter(user => user.id !== userId);
+      saveUsersToCache(updatedUsers);
+      
+      const filteredUsers = filterUsersByCurrentUserRole(updatedUsers);
+      const statistics = calculateUserStatistics(filteredUsers);
+      
+      setFilteredUsersList(filteredUsers);
+      setTotalUsersCount(filteredUsers.length);
+      setUserStatistics(statistics);
+      
+      message.success(`Usuário "${userToDelete.firstName} ${userToDelete.lastName}" removido com sucesso!`);
+    } catch (error) {
+      console.error('Erro ao remover usuário:', error);
+      message.error('Erro ao remover usuário');
+    }
+  }, [loadUsersFromCache, saveUsersToCache, filterUsersByCurrentUserRole, calculateUserStatistics]);
 
-    message.success('Usuário atualizado com sucesso!');
-  }, [filterUsersByRole, calculateStats]);
-
-  // Função para excluir usuário
-  const deleteUser = useCallback((userId: number) => {
-    // Remover do localStorage
-    const currentUsers = loadUsersFromLocalStorage();
-    const updatedUsers = currentUsers.filter(user => user.id !== userId);
-    saveUsersToLocalStorage(updatedUsers);
-    
-    // Atualizar estado local
-    const filteredData = filterUsersByRole(updatedUsers);
-    setFilteredUsers(filteredData);
-    setTotalUsers(filteredData.length);
-    
-    // Atualizar estatísticas
-    const newStats = calculateStats(filteredData);
-    setStats(newStats);
-
-    message.success('Usuário excluído com sucesso!');
-  }, [filterUsersByRole, calculateStats]);
-
-  // Carregar usuários quando o hook for inicializado
+  // Carregar usuários na inicialização
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+    fetchUsersFromApiOrCache();
+  }, [fetchUsersFromApiOrCache]);
 
   return {
-    filteredUsers,
-    usersLoading,
-    loadingProgress,
-    totalUsers,
-    stats,
-    fetchUsers,
-    refreshUsers,
-    addUser,
-    editUser,
-    deleteUser,
-    generateId
+    // Estados
+    filteredUsers: filteredUsersList,
+    usersLoading: isLoadingUsers,
+    loadingProgress: loadingProgressPercentage,
+    totalUsers: totalUsersCount,
+    stats: userStatistics,
+    
+    // Ações
+    fetchUsers: fetchUsersFromApiOrCache,
+    refreshUsers: refreshUsersFromApi,
+    addUser: createNewUser,
+    editUser: updateExistingUser,
+    deleteUser: removeUser,
+    generateId: generateUniqueUserId,
+    clearCache: clearUsersCache,
   };
 }

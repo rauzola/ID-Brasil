@@ -22,7 +22,7 @@ const CSSLoader = ({ children }: { children: React.ReactNode }) => {
             document.body.className = systemTheme;
           }
         }
-      } catch (e) {
+      } catch {
         if (document.body.className !== 'light') {
           document.body.className = 'light';
         }
