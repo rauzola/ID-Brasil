@@ -128,6 +128,67 @@ export const authService = {
       throw error;
     }
   },
+
+  // Buscar todos os usuários
+  getUsers: async (limit: number = 30, skip: number = 0) => {
+    try {
+      const response = await api.get(`/users?limit=${limit}&skip=${skip}`);
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao obter lista de usuários:', error);
+      throw error;
+    }
+  },
+
+  // Adicionar novo usuário
+  addUser: async (userData: {
+    firstName: string;
+    lastName: string;
+    username: string;
+    email: string;
+    password: string;
+    age: number;
+    gender: string;
+    role?: string;
+  }) => {
+    try {
+      const response = await api.post('/users/add', userData);
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao adicionar usuário:', error);
+      throw error;
+    }
+  },
+
+  // Atualizar usuário
+  updateUser: async (id: number, userData: {
+    firstName?: string;
+    lastName?: string;
+    username?: string;
+    email?: string;
+    age?: number;
+    gender?: string;
+    role?: string;
+  }) => {
+    try {
+      const response = await api.put(`/users/${id}`, userData);
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao atualizar usuário:', error);
+      throw error;
+    }
+  },
+
+  // Excluir usuário
+  deleteUser: async (id: number) => {
+    try {
+      const response = await api.delete(`/users/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao excluir usuário:', error);
+      throw error;
+    }
+  },
 };
 
 
