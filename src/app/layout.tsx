@@ -52,6 +52,24 @@ export default function RootLayout({
         {/* Preload para CSS crítico */}
         <link rel="preload" href="/_next/static/css/app/layout.css" as="style" />
         <link rel="preload" href="https://unpkg.com/antd@5.27.3/dist/reset.css" as="style" />
+        {/* Script para aplicar tema imediatamente */}
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            (function() {
+              try {
+                const savedTheme = localStorage.getItem('theme');
+                if (savedTheme === 'dark' || savedTheme === 'light') {
+                  document.body.className = savedTheme;
+                } else {
+                  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                  document.body.className = prefersDark ? 'dark' : 'light';
+                }
+              } catch (e) {
+                document.body.className = 'light';
+              }
+            })();
+          `
+        }} />
         {/* CSS crítico inline para evitar FOUC */}
         <style dangerouslySetInnerHTML={{
           __html: `

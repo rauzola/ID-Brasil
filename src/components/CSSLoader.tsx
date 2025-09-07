@@ -7,6 +7,31 @@ const CSSLoader = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Aplicar tema imediatamente se ainda não foi aplicado
+    const applyTheme = () => {
+      try {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark' || savedTheme === 'light') {
+          if (document.body.className !== savedTheme) {
+            document.body.className = savedTheme;
+          }
+        } else {
+          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          const systemTheme = prefersDark ? 'dark' : 'light';
+          if (document.body.className !== systemTheme) {
+            document.body.className = systemTheme;
+          }
+        }
+      } catch (e) {
+        if (document.body.className !== 'light') {
+          document.body.className = 'light';
+        }
+      }
+    };
+
+    // Aplicar tema imediatamente
+    applyTheme();
+
     // Verificar se o CSS do Ant Design foi carregado
     const checkCSSLoaded = () => {
       const antdStyles = document.querySelector('style[data-antd]') || 
@@ -16,6 +41,7 @@ const CSSLoader = ({ children }: { children: React.ReactNode }) => {
       if (antdStyles || document.readyState === 'complete') {
         // Pequeno delay para garantir que todos os estilos foram aplicados
         setTimeout(() => {
+          applyTheme(); // Aplicar tema novamente antes de finalizar
           setIsLoading(false);
         }, 100);
       } else {
@@ -29,6 +55,7 @@ const CSSLoader = ({ children }: { children: React.ReactNode }) => {
     
     // Fallback: parar de carregar após 2 segundos
     const timeout = setTimeout(() => {
+      applyTheme(); // Aplicar tema antes do fallback
       setIsLoading(false);
     }, 2000);
 
@@ -44,7 +71,8 @@ const CSSLoader = ({ children }: { children: React.ReactNode }) => {
           left: 0,
           width: '100%',
           height: '100%',
-          backgroundColor: '#fff',
+          backgroundColor: 'var(--bg-primary)',
+          color: 'var(--text-primary)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -54,7 +82,7 @@ const CSSLoader = ({ children }: { children: React.ReactNode }) => {
       >
         <div style={{ textAlign: 'center' }}>
           <Spin size="large" />
-          <div style={{ marginTop: 16, fontSize: 16, color: '#666' }}>
+          <div style={{ marginTop: 16, fontSize: 16, color: 'var(--text-secondary)' }}>
             Carregando...
           </div>
         </div>

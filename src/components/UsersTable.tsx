@@ -56,7 +56,7 @@ export default function UsersTable({
     {
       title: (
         <Space>
-          <UserOutlined style={{ color: '#1890ff' }} />
+          <UserOutlined style={{ color: 'var(--info-color)' }} />
           <span>Usuário</span>
         </Space>
       ),
@@ -70,15 +70,15 @@ export default function UsersTable({
             src={image} 
             icon={<UserOutlined />}
             style={{ 
-              border: '2px solid #f0f0f0',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+              border: '2px solid var(--border-secondary)',
+              boxShadow: '0 2px 8px var(--shadow-primary)'
             }}
           />
           <div>
             <div style={{ fontWeight: 600, fontSize: '14px' }}>
               {record.firstName} {record.lastName}
             </div>
-            <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
+            <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
               ID: {record.id}
             </div>
           </div>
@@ -88,7 +88,7 @@ export default function UsersTable({
     {
       title: (
         <Space>
-          <SearchOutlined style={{ color: '#1890ff' }} />
+          <SearchOutlined style={{ color: 'var(--info-color)' }} />
           <span>Username</span>
         </Space>
       ),
@@ -97,7 +97,9 @@ export default function UsersTable({
       width: 150,
       render: (username: string) => (
         <Text code style={{ 
-          background: '#f6f8fa', 
+          background: 'var(--bg-tertiary)', 
+          color: 'var(--text-primary)',
+          border: '1px solid var(--border-secondary)',
           padding: '4px 8px', 
           borderRadius: '4px',
           fontSize: '13px'
@@ -110,7 +112,7 @@ export default function UsersTable({
     {
       title: (
         <Space>
-          <UserOutlined style={{ color: '#1890ff' }} />
+          <UserOutlined style={{ color: 'var(--info-color)' }} />
           <span>Email</span>
         </Space>
       ),
@@ -119,7 +121,7 @@ export default function UsersTable({
       width: 200,
       render: (email: string) => (
         <Tooltip title={email}>
-          <Text style={{ fontSize: '13px' }}>{email}</Text>
+          <Text style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{email}</Text>
         </Tooltip>
       ),
       sorter: (a: UserData, b: UserData) => a.email.localeCompare(b.email),
@@ -127,7 +129,7 @@ export default function UsersTable({
     {
       title: (
         <Space>
-          <FilterOutlined style={{ color: '#1890ff' }} />
+          <FilterOutlined style={{ color: 'var(--info-color)' }} />
           <span>Gênero</span>
         </Space>
       ),
@@ -138,6 +140,7 @@ export default function UsersTable({
         <Badge 
           status={gender === 'female' ? 'processing' : 'success'} 
           text={gender === 'female' ? 'Feminino' : 'Masculino'}
+          style={{ color: 'var(--text-primary)' }}
         />
       ),
       filters: [
@@ -149,7 +152,7 @@ export default function UsersTable({
     {
       title: (
         <Space>
-          <CrownOutlined style={{ color: '#1890ff' }} />
+          <CrownOutlined style={{ color: 'var(--info-color)' }} />
           <span>Role</span>
         </Space>
       ),
@@ -200,10 +203,10 @@ export default function UsersTable({
               icon={<InfoCircleOutlined />}
               onClick={() => onViewDetails(record.id)}
               style={{ 
-                color: '#1890ff',
+                color: 'var(--info-color)',
                 borderRadius: '6px',
-                border: '1px solid #d9d9d9',
-                backgroundColor: '#f6ffed'
+                border: '1px solid var(--border-primary)',
+                backgroundColor: 'var(--bg-tertiary)'
               }}
             />
           </Tooltip>
@@ -215,10 +218,10 @@ export default function UsersTable({
                   icon={<EditOutlined />}
                   onClick={() => onEdit(record)}
                   style={{ 
-                    color: '#52c41a',
+                    color: 'var(--success-color)',
                     borderRadius: '6px',
-                    border: '1px solid #d9d9d9',
-                    backgroundColor: '#f6ffed'
+                    border: '1px solid var(--border-primary)',
+                    backgroundColor: 'var(--bg-tertiary)'
                   }}
                 />
               </Tooltip>
@@ -228,10 +231,10 @@ export default function UsersTable({
                   icon={<DeleteOutlined />}
                   onClick={() => onDelete(record.id, `${record.firstName} ${record.lastName}`)}
                   style={{ 
-                    color: '#ff4d4f',
+                    color: 'var(--error-color)',
                     borderRadius: '6px',
-                    border: '1px solid #d9d9d9',
-                    backgroundColor: '#fff2f0'
+                    border: '1px solid var(--border-primary)',
+                    backgroundColor: 'var(--bg-tertiary)'
                   }}
                 />
               </Tooltip>
@@ -244,10 +247,10 @@ export default function UsersTable({
                   icon={<EditOutlined />}
                   disabled
                   style={{ 
-                    color: '#d9d9d9',
+                    color: 'var(--text-tertiary)',
                     borderRadius: '6px',
-                    border: '1px solid #f0f0f0',
-                    backgroundColor: '#fafafa'
+                    border: '1px solid var(--border-secondary)',
+                    backgroundColor: 'var(--bg-tertiary)'
                   }}
                 />
                 <Button
@@ -255,10 +258,10 @@ export default function UsersTable({
                   icon={<DeleteOutlined />}
                   disabled
                   style={{ 
-                    color: '#d9d9d9',
+                    color: 'var(--text-tertiary)',
                     borderRadius: '6px',
-                    border: '1px solid #f0f0f0',
-                    backgroundColor: '#fafafa'
+                    border: '1px solid var(--border-secondary)',
+                    backgroundColor: 'var(--bg-tertiary)'
                   }}
                 />
               </Space>
@@ -273,37 +276,97 @@ export default function UsersTable({
     <>
       <style jsx global>{`
         .table-row-light {
-          background: #fafafa;
+          background: var(--table-bg);
         }
         .table-row-dark {
-          background: #fff;
+          background: var(--table-bg);
         }
         .table-row-light:hover,
         .table-row-dark:hover {
-          background: #e6f7ff !important;
+          background: var(--table-row-hover) !important;
           transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+          box-shadow: 0 4px 12px var(--shadow-primary);
           transition: all 0.3s ease;
         }
         .ant-table-thead > tr > th {
-          background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
-          border-bottom: 2px solid #dee2e6 !important;
+          background: var(--bg-tertiary) !important;
+          border-bottom: 2px solid var(--border-primary) !important;
           font-weight: 600 !important;
-          color: #495057 !important;
+          color: var(--text-primary) !important;
         }
         .ant-table-tbody > tr > td {
-          border-bottom: 1px solid #f0f0f0 !important;
+          border-bottom: 1px solid var(--border-secondary) !important;
           padding: 16px !important;
+          background-color: var(--table-bg) !important;
+          color: var(--text-primary) !important;
+        }
+        .ant-table {
+          background: var(--table-bg) !important;
+        }
+        .ant-table-container {
+          background: var(--table-bg) !important;
+        }
+        .ant-table-content {
+          background: var(--table-bg) !important;
         }
         .ant-pagination {
           margin-top: 24px !important;
         }
         .ant-pagination-item {
           border-radius: 8px !important;
+          background: var(--bg-tertiary) !important;
+          border-color: var(--border-primary) !important;
+          color: var(--text-primary) !important;
+        }
+        .ant-pagination-item:hover {
+          background: var(--table-row-hover) !important;
+          border-color: var(--border-primary) !important;
         }
         .ant-pagination-item-active {
           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
           border-color: transparent !important;
+          color: white !important;
+        }
+        .ant-pagination-prev,
+        .ant-pagination-next {
+          background: var(--bg-tertiary) !important;
+          border-color: var(--border-primary) !important;
+          color: var(--text-primary) !important;
+        }
+        .ant-pagination-prev:hover,
+        .ant-pagination-next:hover {
+          background: var(--table-row-hover) !important;
+          border-color: var(--border-primary) !important;
+        }
+        .ant-pagination-options {
+          color: var(--text-primary) !important;
+        }
+        .ant-pagination-options .ant-select {
+          background: var(--bg-tertiary) !important;
+          border-color: var(--border-primary) !important;
+          color: var(--text-primary) !important;
+        }
+        .ant-pagination-options .ant-select-selector {
+          background: var(--bg-tertiary) !important;
+          border-color: var(--border-primary) !important;
+          color: var(--text-primary) !important;
+        }
+        .ant-pagination-total-text {
+          color: var(--text-primary) !important;
+        }
+        .ant-pagination-jump-prev,
+        .ant-pagination-jump-next {
+          color: var(--text-primary) !important;
+        }
+        .ant-pagination-jump-prev:hover,
+        .ant-pagination-jump-next:hover {
+          color: var(--text-primary) !important;
+        }
+        .ant-badge-status-text {
+          color: var(--text-primary) !important;
+        }
+        .ant-badge-status-dot {
+          border: 1px solid var(--border-primary) !important;
         }
       `}</style>
       <Table

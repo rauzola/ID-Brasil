@@ -206,7 +206,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <Layout style={{ minHeight: '100vh', background: '#f5f5f5' }}>
+    <Layout style={{ minHeight: '100vh', background: 'var(--bg-secondary)' }}>
       <Header />
       <Content style={{ padding: '24px' }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
@@ -217,17 +217,20 @@ export default function DashboardPage() {
 
             {/* Tabela de Usuários */}
             <Card 
+              className="gradient-card"
               style={{
                 borderRadius: '16px',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+                boxShadow: '0 8px 32px var(--shadow-primary)',
                 border: 'none',
-                overflow: 'hidden'
+                overflow: 'hidden',
+                backgroundColor: 'var(--card-bg)',
+                color: 'var(--text-primary)'
               }}
               title={
                 <Space size="large">
                   <Space>
                     <TeamOutlined style={{ color: '#1890ff', fontSize: '20px' }} />
-                    <span style={{ fontSize: '18px', fontWeight: 600 }}>
+                    <span style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-primary)' }}>
                       Lista de Usuários
                     </span>
                   </Space>
@@ -239,7 +242,7 @@ export default function DashboardPage() {
                         boxShadow: '0 2px 8px rgba(82, 196, 26, 0.3)'
                       }} 
                     />
-                    <Text type="secondary" style={{ fontSize: '12px' }}>
+                    <Text type="secondary" style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
                       {stats.total === 0 ? 'Carregando usuários...' : `${stats.total} usuários carregados`}
                     </Text>
                   </Space>

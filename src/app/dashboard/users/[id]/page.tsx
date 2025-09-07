@@ -86,7 +86,7 @@ export default function UserDetailsPage() {
   const { isAuthenticated, loading, user } = useAuth();
   const router = useRouter();
   const params = useParams();
-  const userId = params.id as string;
+  const userId = params?.id as string;
   
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
@@ -148,7 +148,7 @@ export default function UserDetailsPage() {
       okText: 'Excluir',
       okType: 'danger',
       cancelText: 'Cancelar',
-      icon: <DeleteOutlined style={{ color: '#ff4d4f' }} />,
+      icon: <DeleteOutlined style={{ color: 'var(--error-color)' }} />,
       async onOk() {
         try {
           // Remover do localStorage
@@ -220,9 +220,28 @@ export default function UserDetailsPage() {
   const roleConfig = getRoleConfig(userDetails.role);
 
   return (
-    <Layout style={{ minHeight: '100vh', background: '#f5f5f5' }}>
-      <Header />
-      <Content style={{ padding: '24px' }}>
+    <>
+      <style jsx global>{`
+        .ant-descriptions-item-label {
+          color: var(--text-secondary) !important;
+          font-weight: 500 !important;
+        }
+        .ant-descriptions-item-content {
+          color: var(--text-primary) !important;
+        }
+        .ant-card-head-title {
+          color: var(--text-primary) !important;
+        }
+        .ant-badge-status-text {
+          color: var(--text-primary) !important;
+        }
+        .ant-badge-status-dot {
+          border: 1px solid var(--border-primary) !important;
+        }
+      `}</style>
+      <Layout style={{ minHeight: '100vh', background: 'var(--bg-secondary)' }}>
+        <Header />
+        <Content style={{ padding: '24px' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <Space direction="vertical" size="large" style={{ width: '100%' }}>
             
@@ -230,8 +249,9 @@ export default function UserDetailsPage() {
             <Card 
               style={{
                 borderRadius: '16px',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-                border: 'none'
+                boxShadow: '0 8px 32px var(--shadow-primary)',
+                border: 'none',
+                background: 'var(--card-bg)'
               }}
             >
               <Row align="middle" justify="space-between">
@@ -250,16 +270,20 @@ export default function UserDetailsPage() {
                         src={userDetails.image} 
                         icon={<UserOutlined />}
                         style={{ 
-                          border: '3px solid #f0f0f0',
-                          boxShadow: '0 4px 16px rgba(0,0,0,0.1)'
+                          border: '3px solid var(--border-secondary)',
+                          boxShadow: '0 4px 16px var(--shadow-primary)'
                         }}
                       />
                       <div>
-                        <Title level={2} style={{ margin: 0 }}>
+                        <Title level={2} style={{ margin: 0, color: 'var(--text-primary)' }}>
                           {userDetails.firstName} {userDetails.lastName}
                         </Title>
                         <Space>
-                          <Text code>@{userDetails.username}</Text>
+                          <Text code style={{ 
+                            background: 'var(--bg-tertiary)', 
+                            color: 'var(--text-primary)',
+                            border: '1px solid var(--border-secondary)'
+                          }}>@{userDetails.username}</Text>
                           <Tag 
                             color={roleConfig.color}
                             style={{ 
@@ -313,14 +337,15 @@ export default function UserDetailsPage() {
                 <Card 
                   title={
                     <Space>
-                      <UserOutlined style={{ color: '#1890ff' }} />
+                      <UserOutlined style={{ color: 'var(--info-color)' }} />
                       <span>Informações Pessoais</span>
                     </Space>
                   }
                   style={{
                     borderRadius: '16px',
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-                    border: 'none'
+                    boxShadow: '0 8px 32px var(--shadow-primary)',
+                    border: 'none',
+                    background: 'var(--card-bg)'
                   }}
                 >
                   <Descriptions column={1} size="small">
@@ -371,14 +396,15 @@ export default function UserDetailsPage() {
                 <Card 
                   title={
                     <Space>
-                      <EnvironmentOutlined style={{ color: '#1890ff' }} />
+                      <EnvironmentOutlined style={{ color: 'var(--info-color)' }} />
                       <span>Endereço</span>
                     </Space>
                   }
                   style={{
                     borderRadius: '16px',
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-                    border: 'none'
+                    boxShadow: '0 8px 32px var(--shadow-primary)',
+                    border: 'none',
+                    background: 'var(--card-bg)'
                   }}
                 >
                   <Descriptions column={1} size="small">
@@ -428,14 +454,15 @@ export default function UserDetailsPage() {
                 <Card 
                   title={
                     <Space>
-                      <UserOutlined style={{ color: '#1890ff' }} />
+                      <UserOutlined style={{ color: 'var(--info-color)' }} />
                       <span>Informações Físicas</span>
                     </Space>
                   }
                   style={{
                     borderRadius: '16px',
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-                    border: 'none'
+                    boxShadow: '0 8px 32px var(--shadow-primary)',
+                    border: 'none',
+                    background: 'var(--card-bg)'
                   }}
                 >
                   <Descriptions column={1} size="small">
@@ -477,14 +504,15 @@ export default function UserDetailsPage() {
                 <Card 
                   title={
                     <Space>
-                      <TeamOutlined style={{ color: '#1890ff' }} />
+                      <TeamOutlined style={{ color: 'var(--info-color)' }} />
                       <span>Empresa</span>
                     </Space>
                   }
                   style={{
                     borderRadius: '16px',
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-                    border: 'none'
+                    boxShadow: '0 8px 32px var(--shadow-primary)',
+                    border: 'none',
+                    background: 'var(--card-bg)'
                   }}
                 >
                   <Descriptions column={1} size="small">
@@ -522,14 +550,15 @@ export default function UserDetailsPage() {
             <Card 
               title={
                 <Space>
-                  <BankOutlined style={{ color: '#1890ff' }} />
+                  <BankOutlined style={{ color: 'var(--info-color)' }} />
                   <span>Informações Bancárias</span>
                 </Space>
               }
               style={{
                 borderRadius: '16px',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-                border: 'none'
+                boxShadow: '0 8px 32px var(--shadow-primary)',
+                border: 'none',
+                background: 'var(--card-bg)'
               }}
             >
               <Descriptions column={2} size="small">
@@ -563,7 +592,8 @@ export default function UserDetailsPage() {
 
           </Space>
         </div>
-      </Content>
-    </Layout>
+        </Content>
+      </Layout>
+    </>
   );
 }

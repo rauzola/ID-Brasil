@@ -11,7 +11,7 @@ const { Header: AntHeader } = Layout;
 const { Title } = Typography;
 
 const Header: React.FC = () => {
-  const { themeMode, toggleTheme } = useTheme();
+  const { toggleTheme, isDark } = useTheme();
   const { user, isAuthenticated, logout } = useAuth();
   const router = useRouter();
 
@@ -65,15 +65,15 @@ const Header: React.FC = () => {
         alignItems: 'center', 
         justifyContent: 'space-between',
         padding: '0 24px',
-        background: themeMode === 'dark' ? '#001529' : '#fff',
-        borderBottom: `1px solid ${themeMode === 'dark' ? '#303030' : '#f0f0f0'}`
+        background: isDark ? '#001529' : '#fff',
+        borderBottom: `1px solid ${isDark ? '#303030' : '#f0f0f0'}`
       }}
     >
       <Title 
         level={3} 
         style={{ 
           margin: 0, 
-          color: themeMode === 'dark' ? '#fff' : '#000' 
+          color: isDark ? '#fff' : '#000' 
         }}
       >
         ID Brasil
@@ -82,18 +82,18 @@ const Header: React.FC = () => {
       <Space>
         <SunOutlined 
           style={{ 
-            color: themeMode === 'light' ? '#faad14' : '#8c8c8c' 
+            color: !isDark ? '#faad14' : '#8c8c8c' 
           }} 
         />
         <Switch
-          checked={themeMode === 'dark'}
+          checked={isDark}
           onChange={toggleTheme}
           checkedChildren={<MoonOutlined />}
           unCheckedChildren={<SunOutlined />}
         />
         <MoonOutlined 
           style={{ 
-            color: themeMode === 'dark' ? '#1890ff' : '#8c8c8c' 
+            color: isDark ? '#1890ff' : '#8c8c8c' 
           }} 
         />
         
@@ -107,7 +107,7 @@ const Header: React.FC = () => {
               type="text" 
               icon={<UserOutlined />}
               style={{ 
-                color: themeMode === 'dark' ? '#fff' : '#000',
+                color: isDark ? '#fff' : '#000',
                 border: 'none'
               }}
             >

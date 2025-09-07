@@ -16,6 +16,7 @@ export default function UserStats({ stats }: UserStatsProps) {
     <Row gutter={[24, 24]}>
       <Col xs={24} sm={12} lg={6}>
         <Card 
+          className="gradient-card"
           style={{ 
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             border: 'none',
