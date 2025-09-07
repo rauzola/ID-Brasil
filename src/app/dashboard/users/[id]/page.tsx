@@ -238,6 +238,18 @@ export default function UserDetailsPage() {
         .ant-badge-status-dot {
           border: 1px solid var(--border-primary) !important;
         }
+        .ant-card {
+          background: var(--card-bg) !important;
+          background-color: var(--card-bg) !important;
+        }
+        .ant-card-body {
+          background: var(--card-bg) !important;
+          background-color: var(--card-bg) !important;
+        }
+        .ant-card-head {
+          background: var(--card-bg) !important;
+          background-color: var(--card-bg) !important;
+        }
       `}</style>
       <Layout style={{ minHeight: '100vh', background: 'var(--bg-secondary)' }}>
         <Header />
@@ -251,7 +263,8 @@ export default function UserDetailsPage() {
                 borderRadius: '16px',
                 boxShadow: '0 8px 32px var(--shadow-primary)',
                 border: 'none',
-                background: 'var(--card-bg)'
+                background: 'var(--card-bg)',
+                backgroundColor: 'var(--card-bg) !important'
               }}
             >
               <Row align="middle" justify="space-between">
@@ -345,7 +358,8 @@ export default function UserDetailsPage() {
                     borderRadius: '16px',
                     boxShadow: '0 8px 32px var(--shadow-primary)',
                     border: 'none',
-                    background: 'var(--card-bg)'
+                    background: 'var(--card-bg)',
+                    backgroundColor: 'var(--card-bg) !important'
                   }}
                 >
                   <Descriptions column={1} size="small">
@@ -404,7 +418,8 @@ export default function UserDetailsPage() {
                     borderRadius: '16px',
                     boxShadow: '0 8px 32px var(--shadow-primary)',
                     border: 'none',
-                    background: 'var(--card-bg)'
+                    background: 'var(--card-bg)',
+                    backgroundColor: 'var(--card-bg) !important'
                   }}
                 >
                   <Descriptions column={1} size="small">
@@ -462,7 +477,8 @@ export default function UserDetailsPage() {
                     borderRadius: '16px',
                     boxShadow: '0 8px 32px var(--shadow-primary)',
                     border: 'none',
-                    background: 'var(--card-bg)'
+                    background: 'var(--card-bg)',
+                    backgroundColor: 'var(--card-bg) !important'
                   }}
                 >
                   <Descriptions column={1} size="small">
@@ -512,7 +528,8 @@ export default function UserDetailsPage() {
                     borderRadius: '16px',
                     boxShadow: '0 8px 32px var(--shadow-primary)',
                     border: 'none',
-                    background: 'var(--card-bg)'
+                    background: 'var(--card-bg)',
+                    backgroundColor: 'var(--card-bg) !important'
                   }}
                 >
                   <Descriptions column={1} size="small">
@@ -558,7 +575,8 @@ export default function UserDetailsPage() {
                 borderRadius: '16px',
                 boxShadow: '0 8px 32px var(--shadow-primary)',
                 border: 'none',
-                background: 'var(--card-bg)'
+                background: 'var(--card-bg)',
+                backgroundColor: 'var(--card-bg) !important'
               }}
             >
               <Descriptions column={2} size="small">
