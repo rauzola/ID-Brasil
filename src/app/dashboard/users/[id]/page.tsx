@@ -33,51 +33,51 @@ interface UserDetails {
   gender: string;
   image: string;
   role: string;
-  age: number;
-  birthDate: string;
-  phone: string;
-  bloodGroup: string;
-  height: number;
-  weight: number;
-  eyeColor: string;
-  hair: {
-    color: string;
-    type: string;
+  age?: number;
+  birthDate?: string;
+  phone?: string;
+  bloodGroup?: string;
+  height?: number;
+  weight?: number;
+  eyeColor?: string;
+  hair?: {
+    color?: string;
+    type?: string;
   };
-  address: {
-    address: string;
-    city: string;
-    state: string;
-    stateCode: string;
-    postalCode: string;
-    coordinates: {
-      lat: number;
-      lng: number;
+  address?: {
+    address?: string;
+    city?: string;
+    state?: string;
+    stateCode?: string;
+    postalCode?: string;
+    coordinates?: {
+      lat?: number;
+      lng?: number;
     };
-    country: string;
+    country?: string;
   };
-  bank: {
-    cardExpire: string;
-    cardNumber: string;
-    cardType: string;
-    currency: string;
-    iban: string;
+  bank?: {
+    cardExpire?: string;
+    cardNumber?: string;
+    cardType?: string;
+    currency?: string;
+    iban?: string;
   };
-  company: {
-    department: string;
-    name: string;
-    title: string;
-    address: {
-      address: string;
-      city: string;
-      state: string;
-      stateCode: string;
-      postalCode: string;
-      coordinates: {
-        lat: number;
-        lng: number;
+  company?: {
+    department?: string;
+    name?: string;
+    title?: string;
+    address?: {
+      address?: string;
+      city?: string;
+      state?: string;
+      stateCode?: string;
+      postalCode?: string;
+      coordinates?: {
+        lat?: number;
+        lng?: number;
       };
-      country: string;
+      country?: string;
     };
   };
 }
@@ -104,6 +104,19 @@ export default function UserDetailsPage() {
       if (isAuthenticated && userId) {
         setLoadingDetails(true);
         try {
+          // Primeiro, tentar buscar do localStorage
+          const storedUsers = localStorage.getItem('users');
+          if (storedUsers) {
+            const users = JSON.parse(storedUsers);
+            const user = users.find((u: UserDetails) => u.id === parseInt(userId));
+            if (user) {
+              setUserDetails(user);
+              setLoadingDetails(false);
+              return;
+            }
+          }
+          
+          // Se não encontrou no localStorage, buscar da API
           const response = await authService.getUserById(parseInt(userId));
           setUserDetails(response);
         } catch (error) {
@@ -138,7 +151,14 @@ export default function UserDetailsPage() {
       icon: <DeleteOutlined style={{ color: '#ff4d4f' }} />,
       async onOk() {
         try {
-          await authService.deleteUser(parseInt(userId));
+          // Remover do localStorage
+          const storedUsers = localStorage.getItem('users');
+          if (storedUsers) {
+            const users = JSON.parse(storedUsers);
+            const updatedUsers = users.filter((u: UserDetails) => u.id !== parseInt(userId));
+            localStorage.setItem('users', JSON.stringify(updatedUsers));
+          }
+          
           message.success(`Usuário "${userDetails.firstName} ${userDetails.lastName}" excluído com sucesso!`);
           router.push('/dashboard');
         } catch (error) {
@@ -316,21 +336,27 @@ export default function UserDetailsPage() {
                         {userDetails.email}
                       </Space>
                     </Descriptions.Item>
-                    <Descriptions.Item label="Telefone">
-                      <Space>
-                        <PhoneOutlined />
-                        {userDetails.phone}
-                      </Space>
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Idade">
-                      {userDetails.age} anos
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Data de Nascimento">
-                      <Space>
-                        <CalendarOutlined />
-                        {userDetails.birthDate}
-                      </Space>
-                    </Descriptions.Item>
+                    {userDetails.phone && (
+                      <Descriptions.Item label="Telefone">
+                        <Space>
+                          <PhoneOutlined />
+                          {userDetails.phone}
+                        </Space>
+                      </Descriptions.Item>
+                    )}
+                    {userDetails.age && (
+                      <Descriptions.Item label="Idade">
+                        {userDetails.age} anos
+                      </Descriptions.Item>
+                    )}
+                    {userDetails.birthDate && (
+                      <Descriptions.Item label="Data de Nascimento">
+                        <Space>
+                          <CalendarOutlined />
+                          {userDetails.birthDate}
+                        </Space>
+                      </Descriptions.Item>
+                    )}
                     <Descriptions.Item label="Gênero">
                       <Badge 
                         status={userDetails.gender === 'female' ? 'processing' : 'success'} 
@@ -356,24 +382,41 @@ export default function UserDetailsPage() {
                   }}
                 >
                   <Descriptions column={1} size="small">
-                    <Descriptions.Item label="Endereço">
-                      {userDetails.address.address}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Cidade">
-                      {userDetails.address.city}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Estado">
-                      {userDetails.address.state} ({userDetails.address.stateCode})
-                    </Descriptions.Item>
-                    <Descriptions.Item label="CEP">
-                      {userDetails.address.postalCode}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="País">
-                      {userDetails.address.country}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Coordenadas">
-                      {userDetails.address.coordinates.lat}, {userDetails.address.coordinates.lng}
-                    </Descriptions.Item>
+                    {userDetails.address?.address && (
+                      <Descriptions.Item label="Endereço">
+                        {userDetails.address.address}
+                      </Descriptions.Item>
+                    )}
+                    {userDetails.address?.city && (
+                      <Descriptions.Item label="Cidade">
+                        {userDetails.address.city}
+                      </Descriptions.Item>
+                    )}
+                    {userDetails.address?.state && (
+                      <Descriptions.Item label="Estado">
+                        {userDetails.address.state} {userDetails.address.stateCode && `(${userDetails.address.stateCode})`}
+                      </Descriptions.Item>
+                    )}
+                    {userDetails.address?.postalCode && (
+                      <Descriptions.Item label="CEP">
+                        {userDetails.address.postalCode}
+                      </Descriptions.Item>
+                    )}
+                    {userDetails.address?.country && (
+                      <Descriptions.Item label="País">
+                        {userDetails.address.country}
+                      </Descriptions.Item>
+                    )}
+                    {userDetails.address?.coordinates?.lat && userDetails.address?.coordinates?.lng && (
+                      <Descriptions.Item label="Coordenadas">
+                        {userDetails.address.coordinates.lat}, {userDetails.address.coordinates.lng}
+                      </Descriptions.Item>
+                    )}
+                    {!userDetails.address && (
+                      <Descriptions.Item label="Endereço">
+                        <Text type="secondary">Informações de endereço não disponíveis</Text>
+                      </Descriptions.Item>
+                    )}
                   </Descriptions>
                 </Card>
               </Col>
@@ -396,21 +439,36 @@ export default function UserDetailsPage() {
                   }}
                 >
                   <Descriptions column={1} size="small">
-                    <Descriptions.Item label="Altura">
-                      {userDetails.height} cm
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Peso">
-                      {userDetails.weight} kg
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Tipo Sanguíneo">
-                      {userDetails.bloodGroup}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Cor dos Olhos">
-                      {userDetails.eyeColor}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Cabelo">
-                      {userDetails.hair.color} - {userDetails.hair.type}
-                    </Descriptions.Item>
+                    {userDetails.height && (
+                      <Descriptions.Item label="Altura">
+                        {userDetails.height} cm
+                      </Descriptions.Item>
+                    )}
+                    {userDetails.weight && (
+                      <Descriptions.Item label="Peso">
+                        {userDetails.weight} kg
+                      </Descriptions.Item>
+                    )}
+                    {userDetails.bloodGroup && (
+                      <Descriptions.Item label="Tipo Sanguíneo">
+                        {userDetails.bloodGroup}
+                      </Descriptions.Item>
+                    )}
+                    {userDetails.eyeColor && (
+                      <Descriptions.Item label="Cor dos Olhos">
+                        {userDetails.eyeColor}
+                      </Descriptions.Item>
+                    )}
+                    {userDetails.hair?.color && userDetails.hair?.type && (
+                      <Descriptions.Item label="Cabelo">
+                        {userDetails.hair.color} - {userDetails.hair.type}
+                      </Descriptions.Item>
+                    )}
+                    {!userDetails.height && !userDetails.weight && !userDetails.bloodGroup && !userDetails.eyeColor && !userDetails.hair && (
+                      <Descriptions.Item label="Informações Físicas">
+                        <Text type="secondary">Informações físicas não disponíveis</Text>
+                      </Descriptions.Item>
+                    )}
                   </Descriptions>
                 </Card>
               </Col>
@@ -430,18 +488,31 @@ export default function UserDetailsPage() {
                   }}
                 >
                   <Descriptions column={1} size="small">
-                    <Descriptions.Item label="Empresa">
-                      {userDetails.company.name}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Cargo">
-                      {userDetails.company.title}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Departamento">
-                      {userDetails.company.department}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Endereço da Empresa">
-                      {userDetails.company.address.address}, {userDetails.company.address.city}
-                    </Descriptions.Item>
+                    {userDetails.company?.name && (
+                      <Descriptions.Item label="Empresa">
+                        {userDetails.company.name}
+                      </Descriptions.Item>
+                    )}
+                    {userDetails.company?.title && (
+                      <Descriptions.Item label="Cargo">
+                        {userDetails.company.title}
+                      </Descriptions.Item>
+                    )}
+                    {userDetails.company?.department && (
+                      <Descriptions.Item label="Departamento">
+                        {userDetails.company.department}
+                      </Descriptions.Item>
+                    )}
+                    {userDetails.company?.address?.address && userDetails.company?.address?.city && (
+                      <Descriptions.Item label="Endereço da Empresa">
+                        {userDetails.company.address.address}, {userDetails.company.address.city}
+                      </Descriptions.Item>
+                    )}
+                    {!userDetails.company && (
+                      <Descriptions.Item label="Empresa">
+                        <Text type="secondary">Informações da empresa não disponíveis</Text>
+                      </Descriptions.Item>
+                    )}
                   </Descriptions>
                 </Card>
               </Col>
@@ -462,18 +533,31 @@ export default function UserDetailsPage() {
               }}
             >
               <Descriptions column={2} size="small">
-                <Descriptions.Item label="Tipo de Cartão">
-                  {userDetails.bank.cardType}
-                </Descriptions.Item>
-                <Descriptions.Item label="Moeda">
-                  {userDetails.bank.currency}
-                </Descriptions.Item>
-                <Descriptions.Item label="Cartão Expira">
-                  {userDetails.bank.cardExpire}
-                </Descriptions.Item>
-                <Descriptions.Item label="IBAN">
-                  {userDetails.bank.iban}
-                </Descriptions.Item>
+                {userDetails.bank?.cardType && (
+                  <Descriptions.Item label="Tipo de Cartão">
+                    {userDetails.bank.cardType}
+                  </Descriptions.Item>
+                )}
+                {userDetails.bank?.currency && (
+                  <Descriptions.Item label="Moeda">
+                    {userDetails.bank.currency}
+                  </Descriptions.Item>
+                )}
+                {userDetails.bank?.cardExpire && (
+                  <Descriptions.Item label="Cartão Expira">
+                    {userDetails.bank.cardExpire}
+                  </Descriptions.Item>
+                )}
+                {userDetails.bank?.iban && (
+                  <Descriptions.Item label="IBAN">
+                    {userDetails.bank.iban}
+                  </Descriptions.Item>
+                )}
+                {!userDetails.bank && (
+                  <Descriptions.Item label="Informações Bancárias" span={2}>
+                    <Text type="secondary">Informações bancárias não disponíveis</Text>
+                  </Descriptions.Item>
+                )}
               </Descriptions>
             </Card>
 

@@ -1,5 +1,16 @@
 import axios from 'axios';
 
+interface UserData {
+  id: number;
+  firstName: string;
+  lastName: string;
+  username: string;
+  email: string;
+  gender: string;
+  image: string;
+  role: string;
+}
+
 const api = axios.create({
   baseURL: 'https://dummyjson.com',
   timeout: 10000,
@@ -136,6 +147,45 @@ export const authService = {
       return response.data;
     } catch (error) {
       console.error('Erro ao obter lista de usuários:', error);
+      throw error;
+    }
+  },
+
+  // Buscar todos os usuários (sem paginação da API)
+  getAllUsers: async () => {
+    try {
+      // A API DummyJSON retorna 208 usuários no total
+      // Vamos buscar em lotes de 100 para obter todos os usuários
+      const allUsers: UserData[] = [];
+      let skip = 0;
+      const limit = 100;
+      let hasMore = true;
+
+      while (hasMore) {
+        const response = await api.get(`/users?limit=${limit}&skip=${skip}`);
+        const data = response.data;
+        
+        if (data.users && data.users.length > 0) {
+          allUsers.push(...data.users);
+          skip += limit;
+          
+          // Se retornou menos que o limite, chegamos ao fim
+          if (data.users.length < limit) {
+            hasMore = false;
+          }
+        } else {
+          hasMore = false;
+        }
+      }
+
+      return {
+        users: allUsers,
+        total: allUsers.length,
+        skip: 0,
+        limit: allUsers.length
+      };
+    } catch (error) {
+      console.error('Erro ao obter todos os usuários:', error);
       throw error;
     }
   },
