@@ -497,6 +497,101 @@ body {
    ESTILOS ESPECÍFICOS E UTILITÁRIOS
    ======================================== */
 
+/* Página de Login - Gradientes adaptativos */
+.login-page-content {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  transition: background var(--transition-normal) !important;
+}
+
+.dark .login-page-content {
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%) !important;
+}
+
+/* Card de login com melhor contraste no modo escuro */
+.dark .ant-card {
+  background-color: var(--card-bg) !important;
+  border-color: var(--card-border) !important;
+  box-shadow: 0 8px 32px var(--shadow-primary) !important;
+}
+
+/* Texto secundário no modo escuro */
+.dark .ant-typography-caption,
+.dark .ant-typography-text {
+  color: var(--text-secondary) !important;
+}
+
+/* Melhor contraste para texto secundário no modo escuro */
+.dark .ant-typography-secondary {
+  color: var(--text-primary) !important;
+}
+
+/* Melhor contraste para credenciais de teste */
+.dark .login-credentials {
+  background-color: var(--bg-tertiary) !important;
+  border: 1px solid var(--border-primary) !important;
+  border-radius: 8px !important;
+  padding: 12px !important;
+  margin-top: 16px !important;
+}
+
+/* Texto das credenciais no modo escuro */
+.dark .login-credentials .ant-typography,
+.dark .login-credentials .ant-typography-caption,
+.dark .login-credentials .ant-typography-text {
+  color: var(--text-primary) !important;
+}
+
+.dark .login-credentials div {
+  color: var(--text-primary) !important;
+}
+
+.dark .login-credentials strong {
+  color: var(--text-primary) !important;
+  font-weight: 600 !important;
+}
+
+/* Estilos para os campos de formulário no modo escuro */
+.dark .ant-input,
+.dark .ant-input-password {
+  background-color: var(--input-bg) !important;
+  border-color: var(--input-border) !important;
+  color: var(--text-primary) !important;
+}
+
+.dark .ant-input:focus,
+.dark .ant-input-password:focus,
+.dark .ant-input-focused,
+.dark .ant-input-password-focused {
+  border-color: var(--input-focus-border) !important;
+  box-shadow: 0 0 0 2px var(--shadow-focus) !important;
+}
+
+.dark .ant-input::placeholder,
+.dark .ant-input-password::placeholder {
+  color: var(--text-tertiary) !important;
+}
+
+/* Labels do formulário */
+.dark .ant-form-item-label > label {
+  color: var(--text-primary) !important;
+}
+
+/* Botão primário no modo escuro */
+.dark .ant-btn-primary {
+  background-color: var(--button-primary) !important;
+  border-color: var(--button-primary) !important;
+}
+
+.dark .ant-btn-primary:hover {
+  background-color: var(--button-primary-hover) !important;
+  border-color: var(--button-primary-hover) !important;
+}
+
+.dark .ant-btn-primary:active {
+  background-color: var(--button-primary-active) !important;
+  border-color: var(--button-primary-active) !important;
+}
+
 /* Botão de tema */
 .theme-toggle-button {
   transition: all var(--transition-fast) !important;

@@ -238,14 +238,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Buscar os dados completos do usuário para pegar o role
         const userDetails = await userManagementService.getUserById(response.id);
         
-        // Validar se o usuário tem role permitido (admin ou user)
+        // Validar se o usuário tem role permitido (admin, user ou moderator)
         console.log('User role validation:', {
           username: userDetails.username,
           role: userDetails.role,
-          allowedRoles: ['admin', 'user']
+          allowedRoles: ['admin', 'user', 'moderator']
         });
         
-        if (userDetails.role !== 'admin' && userDetails.role !== 'user') {
+        if (userDetails.role !== 'admin' && userDetails.role !== 'user' && userDetails.role !== 'moderator') {
           console.log('Role validation failed:', userDetails.role);
           
           // Limpar dados de autenticação

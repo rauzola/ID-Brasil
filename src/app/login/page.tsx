@@ -22,7 +22,7 @@ const PAGE_STYLES = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  background: 'var(--bg-primary)',
   padding: '20px',
 } as const;
 
@@ -30,21 +30,23 @@ const PAGE_STYLES = {
 const CARD_STYLES = {
   width: '100%',
   maxWidth: '400px',
-  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+  boxShadow: '0 8px 32px var(--shadow-primary)',
   borderRadius: '12px',
+  backgroundColor: 'var(--card-bg)',
+  border: '1px solid var(--card-border)',
 } as const;
 
 // Configurações de estilo para o ícone de login
 const LOGIN_ICON_STYLES = {
   fontSize: '48px',
-  color: '#1890ff',
+  color: 'var(--button-primary)',
   marginBottom: '16px',
 } as const;
 
 // Configurações de estilo para o título
 const TITLE_STYLES = {
   margin: 0,
-  color: '#1890ff',
+  color: 'var(--text-primary)',
 } as const;
 
 // Configurações de estilo para o container do ícone e título
@@ -60,16 +62,18 @@ const CREDENTIALS_STYLES = {
 // Configurações de estilo para o texto das credenciais
 const CREDENTIALS_TEXT_STYLES = {
   fontSize: '12px',
+  color: 'var(--text-primary)',
 } as const;
 
 // Credenciais de teste para demonstração
 const TEST_CREDENTIALS = [
+  { username: 'henryh', password: 'henryhpass', role: 'user' },
   { username: 'emilys', password: 'emilyspass', role: 'admin' },
-  { username: 'kminchelle', password: '0lelplR', role: 'user' },
+  { username: 'oliviaw', password: 'oliviawpass', role: 'moderator' },
 ] as const;
 
 // Roles permitidos no sistema
-const ALLOWED_ROLES = ['admin', 'user'] as const;
+const ALLOWED_ROLES = ['admin', 'user', 'moderator'] as const;
 
 /**
  * Página de login da aplicação
@@ -151,19 +155,23 @@ export default function LoginPage() {
    * Renderiza as credenciais de teste
    */
   const renderTestCredentials = useCallback(() => (
-    <div style={CREDENTIALS_STYLES}>
+    <div style={CREDENTIALS_STYLES} className="login-credentials">
       <Text type="secondary" style={CREDENTIALS_TEXT_STYLES}>
         <div>Credenciais de teste (roles permitidos: {ALLOWED_ROLES.join(', ')}):</div>
         {TEST_CREDENTIALS.map((credential, index) => (
           <div key={index}>
             <strong>{credential.username}</strong> / <strong>{credential.password}</strong> 
-            <span style={{ color: credential.role === 'admin' ? '#faad14' : '#52c41a', marginLeft: '8px' }}>
+            <span style={{ 
+              color: credential.role === 'admin' ? 'var(--warning-color)' : 
+                     credential.role === 'moderator' ? 'var(--info-color)' : 'var(--success-color)', 
+              marginLeft: '8px' 
+            }}>
               ({credential.role})
             </span>
           </div>
         ))}
-        <div style={{ marginTop: '8px', fontSize: '10px', color: '#ff4d4f' }}>
-          ⚠️ Apenas usuários com role &quot;admin&quot; ou &quot;user&quot; podem fazer login
+        <div style={{ marginTop: '8px', fontSize: '10px', color: 'var(--error-color)' }}>
+          ⚠️ Apenas usuários com role &quot;admin&quot;, &quot;user&quot; ou &quot;moderator&quot; podem fazer login
         </div>
       </Text>
     </div>
@@ -172,7 +180,10 @@ export default function LoginPage() {
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <Header />
-      <Content style={PAGE_STYLES}>
+      <Content 
+        style={PAGE_STYLES}
+        className="login-page-content"
+      >
         <Card style={CARD_STYLES}>
           <Space direction="vertical" size="large" style={{ width: '100%' }}>
             {renderLoginHeader()}
