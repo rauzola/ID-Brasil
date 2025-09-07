@@ -10,7 +10,7 @@ import {
 } from '@ant-design/icons';
 import { useAuth } from '@/contexts/AuthContext';
 
-const { Title, Paragraph, Text } = Typography;
+const { Paragraph } = Typography;
 
 const SessionInfo: React.FC = () => {
   const { sessionExpiresAt, isRefreshing, refreshToken } = useAuth();

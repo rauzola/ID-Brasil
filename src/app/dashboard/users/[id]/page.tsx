@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Layout, Card, Typography, Space, Avatar, Button, Spin, Row, Col, Descriptions, Tag, Badge, message, Modal } from 'antd';
+import { Layout, Card, Typography, Space, Avatar, Button, Row, Col, Descriptions, Tag, Badge, message, Modal } from 'antd';
 import { 
   UserOutlined, 
   CrownOutlined,
