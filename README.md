@@ -130,8 +130,6 @@ Scripts úteis:
 - Qualidade do código (legibilidade, organização de pastas, nomes semânticos)
 - Domínio técnico (TypeScript, React, bibliotecas da stack)
 
-— Boa sorte!
-
 
 ## Autor e Links
 - Autor: **Raul Sigoli**
